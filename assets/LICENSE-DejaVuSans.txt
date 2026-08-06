@@ -1,0 +1,8 @@
+DejaVuSans.ttf is distributed under the DejaVu Fonts License (a permissive,
+Bitstream Vera derived licence that allows redistribution and use, including
+in commercial products).
+
+Full text: https://dejavu-fonts.github.io/License.html
+
+It ships with this repository so a fresh clone renders text without the
+player having to install anything.

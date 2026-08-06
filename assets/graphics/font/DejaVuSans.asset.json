@@ -1,0 +1,8 @@
+{
+    "asset_name": "UI",
+    "critical": true,
+    "expected_load_time_seconds": 5.0,
+    "guid": "1000001",
+    "source": "graphics/font/DejaVuSans.ttf",
+    "type": "Font"
+}

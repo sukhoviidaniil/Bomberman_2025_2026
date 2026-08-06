@@ -1,0 +1,18 @@
+#
+---
+Language:        Cpp
+BasedOnStyle:    LLVM
+AccessModifierOffset: -4
+AlignAfterOpenBracket: Align
+AllowShortFunctionsOnASingleLine: Inline
+AllowShortIfStatementsOnASingleLine: Never
+AlwaysBreakTemplateDeclarations: Yes
+BreakBeforeBraces: Attach
+ColumnLimit:     120
+IndentWidth:     4
+NamespaceIndentation: All
+PointerAlignment: Left
+SpaceAfterTemplateKeyword: false
+Standard:        c++20
+TabWidth:        4
+UseTab:          Never

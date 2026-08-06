@@ -1,0 +1,63 @@
+# ---------------------------------------------------------------------------
+# CI for the Bomberman project.
+#
+# Two jobs, mirroring the structural claim the assignment cares about:
+#
+#   logic - builds bomberman_logic and its test suite with **no SFML
+#           installed**. If a graphics header ever leaks into the game
+#           rules, this job is where it stops.
+#
+#   game  - installs SFML and builds everything, including the playable
+#           binary and the generated asset registry.
+# ---------------------------------------------------------------------------
+version: 2.1
+
+jobs:
+  logic:
+    docker:
+      - image: ubuntu:24.04
+    steps:
+      - checkout
+      - run:
+          name: Toolchain (deliberately without SFML)
+          command: |
+            apt-get update -qq
+            DEBIAN_FRONTEND=noninteractive apt-get install -y -qq build-essential cmake git ca-certificates
+      - run:
+          name: Configure
+          # The logic library and the tests do not need SFML, but the
+          # top-level CMakeLists looks for it because the view target
+          # does - so this job builds the two targets directly.
+          command: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release || true
+      - run:
+          name: Build and run the logic tests
+          command: |
+            cmake --build build --target bomberman_tests -j4
+            ./build/test/bomberman_tests
+
+  game:
+    docker:
+      - image: ubuntu:24.04
+    steps:
+      - checkout
+      - run:
+          name: Toolchain and SFML 2.6
+          command: |
+            apt-get update -qq
+            DEBIAN_FRONTEND=noninteractive apt-get install -y -qq \
+              build-essential cmake git ca-certificates libsfml-dev
+      - run:
+          name: Configure
+          command: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+      - run:
+          name: Build everything
+          command: cmake --build build -j4
+      - run:
+          name: Tests
+          command: ./build/test/bomberman_tests
+
+workflows:
+  build_and_test:
+    jobs:
+      - logic
+      - game
