@@ -11,6 +11,7 @@
 #define BOMBERMAN_VIEW_ARENAVIEW_H
 
 #include "bomberman/logic/grid/TileGrid.h"
+#include "bomberman/view/GameAssets.h"
 
 #include "sif/render/Camera.h"
 #include "sif/render/RenderFrame.h"
@@ -24,15 +25,20 @@ namespace bomberman::view {
      * no behaviour, no events and no lifetime of their own; they are a
      * property of the grid.
      *
+     * Floor is drawn under everything, then walls and blocks on top, so a
+     * block sprite that overhangs its tile (they are 51x53 on a 50x45
+     * floor) covers the neighbour instead of being covered by it.
+     *
      * TODO(daniil): the tile layout only changes when a block is
-     * destroyed, so this belongs in RenderFrame::constant_items behind a
-     * dirty flag rather than being rebuilt every frame. sif's
-     * FrameContext already carries a `redrawing` flag for exactly this;
-     * nothing reads it yet.
+     *  destroyed, so this belongs in RenderFrame::constant_items behind a
+     *  dirty flag rather than being rebuilt every frame.
+     *  sif::rnd::FrameContext already carries a `redrawing` flag that
+     *  nothing reads yet.
      */
     class ArenaView {
     public:
         static void append_render_items(const logic::TileGrid& grid,
+                                        const GameAssets& assets,
                                         sif::rnd::RenderFrame& frame,
                                         const sif::rnd::Camera& camera);
     };

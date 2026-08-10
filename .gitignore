@@ -9,8 +9,9 @@ external/json/
 external/SFML-*/
 _deps/
 
-# Generated data
+# Generated data (rebuilt by sif_sprite_packer + Asset_GUID_Assignment)
 assets/bin/
+assets/graphics/sprites/
 assets/scoreboard.json
 
 # Tooling / IDE

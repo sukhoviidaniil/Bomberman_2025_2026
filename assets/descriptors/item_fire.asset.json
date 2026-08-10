@@ -1,0 +1,7 @@
+{
+    "asset_name": "item_fire",
+    "expected_load_time_seconds": 5.0,
+    "guid": "4000004",
+    "source": "graphics/bombman/item_flame.png",
+    "type": "SpriteSingle"
+}

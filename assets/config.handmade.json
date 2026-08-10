@@ -1,0 +1,39 @@
+{
+    "_comment": [
+        "An explicit arena instead of a generated one. Run it with:",
+        "    ./bomberman assets/ assets/config.handmade.json",
+        "",
+        "Legend:",
+        "    #   indestructible wall",
+        "    +   destructible block (* also works)",
+        "    .   free floor (a space works too)",
+        "    1-4 spawn cell, free; 1 is the player, 2-4 are the bots,",
+        "        in digit order rather than reading order",
+        "",
+        "Every row must be the same length. A layout with fewer spawns than",
+        "round.bot_count simply spawns fewer bots - two characters sharing a",
+        "cell would die to the same first bomb."
+    ],
+
+    "random_seed": 7,
+
+    "map": {
+        "layout": [
+            "1..+++++++..2",
+            ".#+#+#+#+#+#.",
+            "++++++.++++++",
+            "+#+#+#+#+#+#+",
+            "++++++++++++.",
+            "+#+#+#.#+#+#+",
+            ".++++++++++++",
+            "+#+#+#+#+#+#+",
+            "++++++.++++++",
+            ".#+#+#+#+#+#.",
+            "3..+++++++..4"
+        ]
+    },
+
+    "round": {
+        "bot_count": 3
+    }
+}

@@ -12,6 +12,7 @@
 
 #include "bomberman/logic/IEntityFactory.h"
 #include "bomberman/view/EntityView.h"
+#include "bomberman/view/GameAssets.h"
 
 namespace bomberman::view {
 
@@ -30,7 +31,7 @@ namespace bomberman::view {
      */
     class SFMLEntityFactory final : public logic::IEntityFactory {
     public:
-        explicit SFMLEntityFactory(ViewRegistry& views);
+        SFMLEntityFactory(ViewRegistry& views, const GameAssets& assets);
 
         [[nodiscard]] std::shared_ptr<logic::Character> make_character(
             logic::CharacterKind kind, sif::math::Point2 position, float size, float speed) override;
@@ -48,6 +49,7 @@ namespace bomberman::view {
 
     private:
         ViewRegistry& views_;
+        const GameAssets& assets_;
         std::size_t bots_created_ = 0;
     };
 }

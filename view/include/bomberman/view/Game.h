@@ -13,7 +13,9 @@
 #include <memory>
 #include <string>
 
+#include "bomberman/logic/Config.h"
 #include "bomberman/logic/ScoreBoard.h"
+#include "bomberman/view/GameAssets.h"
 #include "bomberman/view/state/StateManager.h"
 
 #include "sif/asset/AssetHandle.h"
@@ -42,7 +44,13 @@ namespace bomberman::view {
          * @param data_dir Directory holding the asset registry and data.
          * @throws std::runtime_error if the backend or the assets cannot be created.
          */
-        explicit Game(std::string data_dir);
+        /**
+         * @param data_dir Directory holding the asset registry and data.
+         * @param config Everything the game was configured with; the view
+         * layer reads the window, audio and round sections and passes the
+         * rest through to the World.
+         */
+        Game(std::string data_dir, logic::GameConfig config);
 
         ~Game() override;
 
@@ -54,6 +62,12 @@ namespace bomberman::view {
         [[nodiscard]] sif::audio::AudioPlayer& audio() const;
         [[nodiscard]] const sif::rnd::Camera& camera() const;
         [[nodiscard]] sif::asset::AssetHandle<sif::asset::Font> ui_font() const;
+
+        /// @brief The loaded configuration; states read the map and round sections.
+        [[nodiscard]] const logic::GameConfig& config() const;
+
+        /// @brief Handles to every asset, already requested.
+        [[nodiscard]] const GameAssets& assets() const;
 
         [[nodiscard]] logic::ScoreBoard& score_board();
         [[nodiscard]] const std::string& score_board_path() const;
@@ -70,8 +84,12 @@ namespace bomberman::view {
         std::unique_ptr<sif::event::Event_Collector> collector_;
         std::shared_ptr<sif::audio::AudioPlayer> audio_;
 
+        logic::GameConfig config_;
         sif::rnd::Camera camera_;
-        sif::asset::AssetHandle<sif::asset::Font> ui_font_;
+
+        // Constructed after the loaders are registered, because building
+        // it starts every asset load.
+        std::unique_ptr<GameAssets> assets_;
 
         logic::ScoreBoard score_board_;
         StateManager states_;

@@ -80,6 +80,56 @@ consumer can ever see its definition. It is an upstream defect, tracked as item 
 
 ---
 
+## Configuration
+
+Everything tunable lives in `assets/config.json` — no rebuild required:
+
+```jsonc
+{
+  "random_seed": 12345,          // pins the shared RNG: the whole session replays
+  "map": {
+    "rows": 11, "columns": 13,
+    "destructible_chance": 0.75,
+    "power_up_chance": 0.25,
+    "seed": 20260806,            // pins only the arena
+    "layout": null               // or an explicit character matrix (see below)
+  },
+  "round":  { "character_speed": 0.45, "bomb_fuse_seconds": 2.0, "bot_count": 3 },
+  "score":  { "per_enemy_killed": 200, "win_bonus": 1000 },
+  "window": { "width": 960, "height": 720, "fps": 60 },
+  "audio":  { "enabled": true, "master_volume": 0.7 }
+}
+```
+
+Every key is optional; anything absent keeps the built-in default, so a file that
+only sets a seed is valid. Anything *present but wrong* — a ragged layout, a
+negative speed, a probability above 1 — is reported by name at start-up instead
+of turning into strange behaviour later.
+
+**Three ways to get an arena**, in priority order:
+
+1. `map.layout` — an explicit character matrix, used verbatim:
+
+   ```
+   #  indestructible wall      +  destructible block (* also works)
+   .  free floor (or a space)  1-4  spawn cells, in digit order
+   ```
+
+   `assets/config.handmade.json` is a complete example. Run it with:
+
+   ```bash
+   ./build/app/bomberman assets/ assets/config.handmade.json
+   ```
+
+2. `map.seed` — procedural, but reproducible: the same seed and size always
+   produce the same arena, whatever happened before it.
+3. neither — a different arena every run.
+
+`random_seed` and `map.seed` are separate on purpose. The first makes an entire
+session deterministic (arena, power-up drops, every later draw); the second pins
+only the map, which is what you want when reproducing *"this map plays badly"*
+rather than *"this exact run crashed"*.
+
 ## Controls
 
 | Key | Action |
@@ -124,6 +174,46 @@ its own `update()` without being destroyed mid-call.
 a *half*-size, and that is the only meaning it has anywhere.
 
 ---
+
+## Assets
+
+Assets come in three flavours, and only one of them needs any processing.
+
+**Used as-is.** Tiles, power-up icons and sound effects are single files that
+the engine can load directly, so their descriptors are committed under
+`assets/descriptors/` and name the file inside the vendored pack:
+
+```json
+{ "type": "Sound", "asset_name": "sfx_explosion",
+  "source": "sfx/SFX- The Ultimate 2017 8 bit sound Mini pack/Explosion1/Wav/Explosion1__003.wav" }
+```
+
+The `*.asset.json` *is* the indirection — copying the file next to it would
+duplicate bytes to say something the JSON already says.
+
+**Packed.** The art pack ships one PNG per animation frame, while sif addresses
+frames as rectangles inside a single texture. `sif_sprite_packer` — a tool that
+ships with the engine — builds both the strip and its descriptor from
+`assets/sprites.pack.json`, so the pixel rectangles cannot drift out of step
+with the image:
+
+```bash
+sif_sprite_packer assets/ assets/sprites.pack.json
+```
+
+**The registry** is then written by `Asset_GUID_Assignment`, also from sif,
+which scans every `*.asset.json`:
+
+```bash
+Asset_GUID_Assignment assets/ assets/bin/registry.rgst.json
+```
+
+The build runs both automatically (target `bomberman_assets`), and neither
+output is committed: `assets/graphics/sprites/` and `assets/bin/` are
+reproducible from their inputs, and both tools are deterministic — fixed GUID
+base, fixed frame order — so a clean checkout regenerates them byte for byte.
+
+Sources and licences: `assets/ATTRIBUTION.md`.
 
 ## Asset pipeline
 

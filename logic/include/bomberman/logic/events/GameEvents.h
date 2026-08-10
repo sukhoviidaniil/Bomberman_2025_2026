@@ -97,6 +97,19 @@ namespace bomberman::logic::game_events {
         float dt = 0.f;
     };
 
+    /// @brief A character just placed a bomb.
+    struct BombPlaced {
+        static constexpr sif::event::EventMask mask = sif::event::EventMask::Program;
+        TilePos cell{};
+        bool by_player = false;
+    };
+
+    /// @brief A bomb went off (once per bomb, not once per burning tile).
+    struct BombExploded {
+        static constexpr sif::event::EventMask mask = sif::event::EventMask::Program;
+        TilePos cell{};
+    };
+
     /// @brief A destructible block was blown up.
     struct BlockDestroyed {
         static constexpr sif::event::EventMask mask = sif::event::EventMask::Program;

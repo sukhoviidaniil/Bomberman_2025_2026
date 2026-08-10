@@ -21,8 +21,9 @@ namespace bomberman::logic {
 
     World::World(std::shared_ptr<sif::event::Event_Bus> bus,
                  std::shared_ptr<IEntityFactory> factory,
-                 const WorldConfig config)
-        : bus_(std::move(bus)), factory_(std::move(factory)), config_(config) {
+                 MapConfig map, RoundConfig round)
+        : bus_(std::move(bus)), factory_(std::move(factory))
+        , map_(std::move(map)), round_(round) {
 
         if (bus_ == nullptr || factory_ == nullptr) {
             throw std::invalid_argument("World: an event bus and an entity factory are required");
@@ -38,26 +39,40 @@ namespace bomberman::logic {
         round_over_ = false;
         player_won_ = false;
 
-        grid_ = TileGrid(config_.rows, config_.columns);
-        grid_.generate_arena(config_.destructible_chance);
+        // Three ways to get an arena, in priority order: an explicit
+        // layout is used verbatim, a seed makes generation reproducible,
+        // and neither means a fresh arena every run.
+        if (!map_.layout.empty()) {
+            grid_ = TileGrid::from_layout(map_.layout);
+        } else {
+            grid_ = TileGrid(map_.rows, map_.columns);
+            if (map_.seed.has_value()) {
+                grid_.generate_arena(map_.destructible_chance, *map_.seed);
+            } else {
+                grid_.generate_arena(map_.destructible_chance);
+            }
+        }
 
         spawn_characters();
     }
 
     void World::spawn_characters() {
         const std::vector<TilePos> spawns = grid_.spawn_cells();
-        const float size = grid_.tile_size() * config_.character_size;
+        const float size = grid_.tile_size() * round_.character_size;
 
         // The player takes the top-left corner, as the assignment
         // specifies; the bots fill the remaining three.
         player_ = factory_->make_character(
-            CharacterKind::Player, grid_.get_center(spawns[0]), size, config_.character_speed);
+            CharacterKind::Player, grid_.get_center(spawns[0]), size, round_.character_speed);
         characters_.push_back(player_);
 
-        const std::size_t bots = std::min(config_.bot_count, spawns.size() - 1);
+        // A hand-written layout may declare fewer spawns than there are
+        // bots; spawning two characters on one cell would kill them both
+        // on the first bomb, so the count follows the map.
+        const std::size_t bots = spawns.empty() ? 0 : std::min(round_.bot_count, spawns.size() - 1);
         for (std::size_t i = 0; i < bots; ++i) {
             characters_.push_back(factory_->make_character(
-                CharacterKind::Bot, grid_.get_center(spawns[i + 1]), size, config_.character_speed));
+                CharacterKind::Bot, grid_.get_center(spawns[i + 1]), size, round_.character_speed));
         }
     }
 
@@ -129,9 +144,10 @@ namespace bomberman::logic {
 
         bombs_.push_back(factory_->make_bomb(
             grid_.get_center(*cell), grid_.tile_size(), *cell,
-            character, character->blast_radius(), config_.bomb_fuse_seconds));
+            character, character->blast_radius(), round_.bomb_fuse_seconds));
 
         character->on_bomb_placed();
+        bus_->emit(game_events::BombPlaced{*cell, character == player_});
         // The character is standing on it, so it stays passable for them
         // until they step off - "After moving out of the bomb, the player
         // can no longer go through it".
@@ -167,6 +183,7 @@ namespace bomberman::logic {
                     continue;
                 }
 
+                bus_->emit(game_events::BombExploded{bomb->cell()});
                 spread_blast(*bomb);
                 bomb->expire();
 
@@ -186,7 +203,7 @@ namespace bomberman::logic {
 
         const auto ignite = [&](const TilePos& cell) {
             explosions_.push_back(factory_->make_explosion(
-                grid_.get_center(cell), tile, cell, config_.explosion_seconds, from_player));
+                grid_.get_center(cell), tile, cell, round_.explosion_seconds, from_player));
 
             // Any bomb caught by the fire goes off too; detonate() is
             // idempotent, so overlapping blasts are harmless.
@@ -221,7 +238,7 @@ namespace bomberman::logic {
                     bus_->emit(game_events::BlockDestroyed{cell, from_player});
 
                     // A destroyed block may reveal a pick-up.
-                    if (sif::intrnl::rand_chance(config_.power_up_chance)) {
+                    if (sif::intrnl::rand_chance(map_.power_up_chance)) {
                         const auto kind = static_cast<PowerUpKind>(sif::intrnl::rand_index(3));
                         power_ups_.push_back(factory_->make_power_up(
                             grid_.get_center(cell), tile * 0.7f, cell, kind));

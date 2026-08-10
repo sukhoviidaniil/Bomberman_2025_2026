@@ -1,0 +1,122 @@
+{
+    "_comment": [
+        "Input for sif_sprite_packer (see sif/tools/Sprite_Packer.cpp).",
+        "",
+        "The art pack ships one PNG per animation frame; PrimitiveAnimation wants",
+        "frames as rectangles inside one texture. The packer builds both the strip",
+        "and the descriptor from this file, so the pixel rectangles cannot drift",
+        "out of step with the image.",
+        "",
+        "'stills' are single frames: the descriptor names the original file and",
+        "declares one frame covering it. Nothing is copied.",
+        "",
+        "Assets that need no processing at all - tiles, power-up icons, sounds -",
+        "are not here. Their descriptors are committed under assets/descriptors/",
+        "and point straight into the vendored packs.",
+        "",
+        "The build runs this automatically; by hand it is:",
+        "    sif_sprite_packer assets/ assets/sprites.pack.json",
+        "    Asset_GUID_Assignment assets/ assets/bin/registry.rgst.json"
+    ],
+
+    "output_dir": "graphics/sprites",
+    "guid_base": 3000000,
+
+    "animations": [
+        {
+            "asset_name": "player_walk_down",
+            "frame_duration_seconds": 0.12,
+            "align": "bottom",
+            "frames": [
+                "graphics/bombman/player_down_walk1.png",
+                "graphics/bombman/player_down.png",
+                "graphics/bombman/player_down_walk2.png",
+                "graphics/bombman/player_down_walk3.png"
+            ]
+        },
+        {
+            "asset_name": "player_walk_up",
+            "frame_duration_seconds": 0.12,
+            "align": "bottom",
+            "frames": [
+                "graphics/bombman/player_up_walk1.png",
+                "graphics/bombman/player_up.png",
+                "graphics/bombman/player_up_walk2.png",
+                "graphics/bombman/player_up_walk3.png"
+            ]
+        },
+        {
+            "asset_name": "player_walk_left",
+            "frame_duration_seconds": 0.12,
+            "align": "bottom",
+            "frames": [
+                "graphics/bombman/player_left_walk1.png",
+                "graphics/bombman/player_left.png",
+                "graphics/bombman/player_left_walk3.png",
+                "graphics/bombman/player_left.png"
+            ]
+        },
+        {
+            "asset_name": "player_walk_right",
+            "frame_duration_seconds": 0.12,
+            "align": "bottom",
+            "frames": [
+                "graphics/bombman/player_right_walk1.png",
+                "graphics/bombman/player_right.png",
+                "graphics/bombman/player_right_walk3.png",
+                "graphics/bombman/player_right.png"
+            ]
+        },
+        {
+            "asset_name": "player_die",
+            "frame_duration_seconds": 0.14,
+            "loop": false,
+            "align": "bottom",
+            "frames": [
+                "graphics/bombman/animation_die1.png",
+                "graphics/bombman/animation_die2.png",
+                "graphics/bombman/animation_die3.png",
+                "graphics/bombman/animation_die4.png",
+                "graphics/bombman/animation_die5.png",
+                "graphics/bombman/animation_die6.png",
+                "graphics/bombman/animation_die7.png"
+            ]
+        },
+        {
+            "asset_name": "bomb",
+            "frame_duration_seconds": 0.15,
+            "align": "center",
+            "frames": [
+                "graphics/bombman/bomb1.png",
+                "graphics/bombman/bomb2.png",
+                "graphics/bombman/bomb3.png",
+                "graphics/bombman/bomb2.png"
+            ]
+        },
+        {
+            "asset_name": "explosion",
+            "frame_duration_seconds": 0.05,
+            "loop": false,
+            "align": "center",
+            "frames": [
+                "graphics/bombman/animation_explosion1.png",
+                "graphics/bombman/animation_explosion2.png",
+                "graphics/bombman/animation_explosion3.png",
+                "graphics/bombman/animation_explosion4.png",
+                "graphics/bombman/animation_explosion5.png",
+                "graphics/bombman/animation_explosion6.png",
+                "graphics/bombman/animation_explosion7.png",
+                "graphics/bombman/animation_explosion8.png",
+                "graphics/bombman/animation_explosion9.png",
+                "graphics/bombman/animation_explosion10.png"
+            ]
+        }
+    ],
+
+    "stills": [
+        { "asset_name": "player_idle_down",  "source": "graphics/bombman/player_down.png" },
+        { "asset_name": "player_idle_up",    "source": "graphics/bombman/player_up.png" },
+        { "asset_name": "player_idle_left",  "source": "graphics/bombman/player_left.png" },
+        { "asset_name": "player_idle_right", "source": "graphics/bombman/player_right.png" }
+    ]
+}

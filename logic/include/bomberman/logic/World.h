@@ -13,32 +13,13 @@
 #include <memory>
 #include <vector>
 
+#include "bomberman/logic/Config.h"
 #include "bomberman/logic/IEntityFactory.h"
 #include "bomberman/logic/grid/TileGrid.h"
 
 #include "sif/event/Event_Bus.h"
 
 namespace bomberman::logic {
-
-    /**
-     * @brief Tuning values for one round.
-     *
-     * TODO(daniil): load this from a JSON asset instead of a struct
-     *  literal, so the balance can be tweaked without recompiling. sif's
-     *  asset pipeline already reads arbitrary JSON nodes.
-     */
-    struct WorldConfig {
-        std::size_t rows = 11;
-        std::size_t columns = 13;
-        float destructible_chance = 0.75f;
-        float power_up_chance = 0.25f;
-
-        float character_speed = 0.45f;   ///< World units per second
-        float character_size = 0.85f;    ///< Fraction of a tile
-        float bomb_fuse_seconds = 2.f;
-        float explosion_seconds = 0.5f;
-        std::size_t bot_count = 3;
-    };
 
     /**
      * @brief Owns every entity and runs the rules that connect them.
@@ -52,9 +33,18 @@ namespace bomberman::logic {
      */
     class World {
     public:
+        /**
+         * @param bus Where gameplay events are published (Score listens here).
+         * @param factory Builds entities - with their views attached, when
+         * the representation layer supplies the factory.
+         * @param map How the arena is produced: explicit layout, seed, or
+         * neither.
+         * @param round Speeds, timings and how many bots to spawn.
+         */
         World(std::shared_ptr<sif::event::Event_Bus> bus,
               std::shared_ptr<IEntityFactory> factory,
-              WorldConfig config = {});
+              MapConfig map = {},
+              RoundConfig round = {});
 
         World(const World&) = delete;
         World& operator=(const World&) = delete;
@@ -114,7 +104,8 @@ namespace bomberman::logic {
 
         std::shared_ptr<sif::event::Event_Bus> bus_;
         std::shared_ptr<IEntityFactory> factory_;
-        WorldConfig config_;
+        MapConfig map_;
+        RoundConfig round_;
 
         TileGrid grid_;
 

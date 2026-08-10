@@ -1,0 +1,7 @@
+{
+    "asset_name": "item_skates",
+    "expected_load_time_seconds": 5.0,
+    "guid": "4000006",
+    "source": "graphics/bombman/item_speedup.png",
+    "type": "SpriteSingle"
+}

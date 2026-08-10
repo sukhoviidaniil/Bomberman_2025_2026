@@ -16,6 +16,7 @@
 
 #include "bomberman/logic/Score.h"
 #include "bomberman/logic/World.h"
+#include "bomberman/view/AudioDirector.h"
 #include "bomberman/view/EntityView.h"
 #include "bomberman/view/SFMLEntityFactory.h"
 #include "bomberman/view/state/State.h"
@@ -66,6 +67,10 @@ namespace bomberman::view {
         std::shared_ptr<SFMLEntityFactory> factory_;
         std::unique_ptr<logic::World> world_;
         std::unique_ptr<logic::Score> score_;
+        std::unique_ptr<AudioDirector> audio_;
+
+        /// Borrowed from the Game, which outlives every state.
+        const GameAssets* assets_ = nullptr;
         bool handed_over_ = false;
     };
 

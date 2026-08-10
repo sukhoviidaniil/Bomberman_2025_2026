@@ -1,0 +1,7 @@
+{
+    "asset_name": "tile_block",
+    "expected_load_time_seconds": 5.0,
+    "guid": "4000003",
+    "source": "graphics/bombman/tile_env1_block.png",
+    "type": "SpriteSingle"
+}

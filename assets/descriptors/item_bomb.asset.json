@@ -1,0 +1,7 @@
+{
+    "asset_name": "item_bomb",
+    "expected_load_time_seconds": 5.0,
+    "guid": "4000005",
+    "source": "graphics/bombman/item_bomb.png",
+    "type": "SpriteSingle"
+}

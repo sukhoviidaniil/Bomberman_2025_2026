@@ -13,6 +13,7 @@
 #include <stdexcept>
 #include <utility>
 
+#include "bomberman/view/AssetNames.h"
 #include "bomberman/view/state/States.h"
 
 #include "Graphics_Factory.h"
@@ -26,17 +27,16 @@
 
 namespace bomberman::view {
     namespace {
-        constexpr unsigned int window_width = 960;
-        constexpr unsigned int window_height = 720;
-
         /// The arena is square, so letterboxing keeps the tiles square.
         constexpr sif::rnd::AspectPolicy arena_aspect = sif::rnd::AspectPolicy::Fit;
     }
 
-    Game::Game(std::string data_dir)
+    Game::Game(std::string data_dir, logic::GameConfig config)
         : data_dir_(std::move(data_dir))
         , bus_(std::make_shared<sif::event::Event_Bus>())
-        , camera_({static_cast<float>(window_width), static_cast<float>(window_height)}, arena_aspect)
+        , config_(std::move(config))
+        , camera_({static_cast<float>(config_.window.width),
+                   static_cast<float>(config_.window.height)}, arena_aspect)
         , states_(*this) {
 
         if (!data_dir_.empty() && data_dir_.back() != '/') {
@@ -46,10 +46,10 @@ namespace bomberman::view {
 
         const sif::ast::RB_Config render_config{
             .type = sif::ast::RB_Type::SFML,
-            .window_name = "Bomberman",
-            .window_width = window_width,
-            .window_height = window_height,
-            .fps = 60
+            .window_name = config_.window.title,
+            .window_width = config_.window.width,
+            .window_height = config_.window.height,
+            .fps = config_.window.fps
         };
         const sif::ast::EC_Config collector_config{.type = sif::ast::RB_Type::SFML};
 
@@ -92,9 +92,9 @@ namespace bomberman::view {
 
         registry.set_asset_dir(data_dir_);
 
-        const sif::intrnl::GUID font_guid = importer.get("UI").meta.guid;
-        registry.request(font_guid);
-        ui_font_ = registry.get<sif::asset::Font>(font_guid);
+        // Requesting every asset here starts all the background loads at
+        // once, so the textures are in flight while the menu is drawn.
+        assets_ = std::make_unique<GameAssets>();
     }
 
     void Game::handle_event(const sif::event::EventConcept &ev) {
@@ -122,7 +122,7 @@ namespace bomberman::view {
             states_.update(dt);
 
             sif::rnd::RenderFrame frame;
-            const DrawContext draw_ctx{camera_, ui_font_};
+            const DrawContext draw_ctx{camera_, ui_font()};
             states_.append_render_items(frame, draw_ctx);
             renderer_->render(frame);
 
@@ -142,7 +142,13 @@ namespace bomberman::view {
 
     sif::audio::AudioPlayer & Game::audio() const { return *audio_; }
     const sif::rnd::Camera & Game::camera() const { return camera_; }
-    sif::asset::AssetHandle<sif::asset::Font> Game::ui_font() const { return ui_font_; }
+    sif::asset::AssetHandle<sif::asset::Font> Game::ui_font() const {
+        return assets_->font(assets::ui_font);
+    }
+
+    const logic::GameConfig & Game::config() const { return config_; }
+
+    const GameAssets & Game::assets() const { return *assets_; }
     logic::ScoreBoard & Game::score_board() { return score_board_; }
     const std::string & Game::score_board_path() const { return score_board_path_; }
 }

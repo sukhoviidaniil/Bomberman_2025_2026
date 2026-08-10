@@ -11,6 +11,8 @@
 #define BOMBERMAN_LOGIC_TILEGRID_H
 
 #include <cstddef>
+#include <cstdint>
+#include <string>
 #include <optional>
 #include <vector>
 
@@ -107,21 +109,61 @@ namespace bomberman::logic {
         /**
          * @brief Fills the grid with the classic Bomberman layout.
          *
-         * Indestructible pillars on every even row/column, the rest
-         * seeded with destructible blocks, and the four corners plus
-         * their neighbours left clear so nobody spawns entombed.
+         * Indestructible pillars on every odd row/column, the rest seeded
+         * with destructible blocks, and the four spawn corners plus their
+         * neighbours left clear so nobody starts entombed.
          *
          * @param destructible_chance Probability a free cell becomes a
          * destructible block, clamped to [0, 1].
          */
         void generate_arena(float destructible_chance = 0.75f);
 
-        /// @brief Cells the four players start on (top-left first).
-        [[nodiscard]] std::vector<TilePos> spawn_cells() const;
+        /**
+         * @brief The same generator, pinned to a seed.
+         *
+         * The seed goes into the one shared generator
+         * (sif::intrnl::Random) rather than into a private engine of this
+         * class: the assignment asks for a single generator, and a private
+         * one would drift from it silently. The practical consequence is
+         * deliberate and documented - starting a round with a map seed
+         * *restarts the whole random stream*, so a seeded map also fixes
+         * the power-up drops and every later draw of that round.
+         *
+         * @param seed Any 32-bit value; the same seed and size always give
+         * the same arena.
+         */
+        void generate_arena(float destructible_chance, std::uint32_t seed);
+
+        /**
+         * @brief Builds a grid from an explicit character matrix.
+         *
+         * Legend:
+         *   `#` indestructible   `+` or `*` destructible
+         *   `.` or space         free
+         *   `1`-`4`              spawn cell (free; spawn order follows the digit)
+         *
+         * Spawn cells found here replace the default corners, so a
+         * hand-written map decides where the players appear.
+         *
+         * @throws std::invalid_argument if the matrix is empty, ragged, or
+         * contains a character that is not in the legend.
+         */
+        [[nodiscard]] static TileGrid from_layout(const std::vector<std::string>& layout);
+
+        /**
+         * @brief Cells the players start on.
+         *
+         * The four corners by default, or whatever the layout's digits
+         * said. Never empty for a grid built by this class.
+         */
+        [[nodiscard]] const std::vector<TilePos>& spawn_cells() const;
 
     private:
         /// @brief Recomputes tile_size_/origin_ after the size changes.
         void recompute_projection();
+
+        /// @brief The four corners, used until a layout says otherwise.
+        [[nodiscard]] std::vector<TilePos> default_spawn_cells() const;
 
         std::size_t rows_ = 0;
         std::size_t columns_ = 0;
@@ -129,7 +171,8 @@ namespace bomberman::logic {
         float tile_size_ = 0.f;             ///< Edge length in world units
         sif::math::Point2 origin_{0.f, 0.f}; ///< World position of cell (0, 0)'s corner
 
-        std::vector<Tile> tiles_; ///< row-major, rows_ * columns_ entries
+        std::vector<Tile> tiles_;   ///< row-major, rows_ * columns_ entries
+        std::vector<TilePos> spawns_; ///< Where characters appear
     };
 }
 

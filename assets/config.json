@@ -1,0 +1,58 @@
+{
+    "_comment": [
+        "Everything the game can be tuned with. Every key is optional:",
+        "anything left out keeps the built-in default, so a file that only",
+        "sets a seed is a valid configuration.",
+        "",
+        "Reproducibility:",
+        "  random_seed  pins the one shared random generator, so a whole",
+        "               session replays identically - arena, power-up drops",
+        "               and every later draw. Remove it for a different game",
+        "               each run.",
+        "  map.seed     pins only the arena. Useful for 'this map plays",
+        "               badly' without freezing everything else.",
+        "  map.layout   an explicit arena; wins over map.seed. See",
+        "               config.handmade.json for the legend and an example."
+    ],
+
+    "random_seed": null,
+
+    "map": {
+        "rows": 11,
+        "columns": 13,
+        "destructible_chance": 0.75,
+        "power_up_chance": 0.25,
+        "seed": 20260806,
+        "layout": null
+    },
+
+    "round": {
+        "character_speed": 0.45,
+        "character_size": 0.85,
+        "bomb_fuse_seconds": 2.0,
+        "explosion_seconds": 0.5,
+        "bot_count": 3
+    },
+
+    "score": {
+        "per_second_alive": 5,
+        "per_block_destroyed": 10,
+        "per_power_up": 25,
+        "per_enemy_killed": 200,
+        "win_bonus": 1000,
+        "loss_penalty": 500
+    },
+
+    "window": {
+        "title": "Bomberman",
+        "width": 960,
+        "height": 720,
+        "fps": 60
+    },
+
+    "audio": {
+        "enabled": true,
+        "master_volume": 0.7,
+        "sfx_volume": 1.0
+    }
+}

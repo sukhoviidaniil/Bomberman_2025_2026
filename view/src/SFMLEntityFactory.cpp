@@ -17,15 +17,18 @@
 namespace bomberman::view {
     namespace {
         /// Distinct colours so the three bots are told apart at a glance.
-        const sif::intrnl::Color player_color{240, 240, 250};
+        const sif::intrnl::Color player_color{255, 255, 255};
+        // Tints, not repaints: the art keeps its shading and the bots
+        // stay instantly distinguishable from the player and each other.
         const sif::intrnl::Color bot_colors[] = {
-            {220, 80, 90},
-            {90, 160, 220},
-            {150, 220, 110}
+            {255, 130, 130},
+            {130, 180, 255},
+            {170, 255, 150}
         };
     }
 
-    SFMLEntityFactory::SFMLEntityFactory(ViewRegistry &views) : views_(views) {
+    SFMLEntityFactory::SFMLEntityFactory(ViewRegistry &views, const GameAssets &assets)
+        : views_(views), assets_(assets) {
     }
 
     std::shared_ptr<logic::Character> SFMLEntityFactory::make_character(
@@ -42,7 +45,7 @@ namespace bomberman::view {
             ++bots_created_;
         }
 
-        views_.add(std::make_shared<CharacterView>(model, color));
+        views_.add(std::make_shared<CharacterView>(model, assets_, color));
         return model;
     }
 
@@ -52,7 +55,7 @@ namespace bomberman::view {
 
         auto model = std::make_shared<logic::Bomb>(
             position, size, cell, std::move(owner), radius, fuse_seconds);
-        views_.add(std::make_shared<BombView>(model));
+        views_.add(std::make_shared<BombView>(model, assets_));
         return model;
     }
 
@@ -62,7 +65,7 @@ namespace bomberman::view {
 
         auto model = std::make_shared<logic::Explosion>(
             position, size, cell, lifetime_seconds, from_player);
-        views_.add(std::make_shared<ExplosionView>(model));
+        views_.add(std::make_shared<ExplosionView>(model, assets_));
         return model;
     }
 
@@ -71,7 +74,7 @@ namespace bomberman::view {
         const logic::TilePos cell, const logic::PowerUpKind kind) {
 
         auto model = std::make_shared<logic::PowerUp>(position, size, cell, kind);
-        views_.add(std::make_shared<PowerUpView>(model));
+        views_.add(std::make_shared<PowerUpView>(model, assets_));
         return model;
     }
 }

@@ -1,5 +1,8 @@
 # TODO and migration notes
 
+> The ordered, dated version of this list is **[PLAN.md](PLAN.md)** — read that
+> first. This file is the raw inventory.
+
 Every item below also exists as a `TODO(daniil)` comment at the place in the code where the
 work has to happen, so CLion's TODO tool window lists them.
 
@@ -10,8 +13,9 @@ work has to happen, so CLion's TODO tool window lists them.
 | # | What | Where |
 |---|------|-------|
 | 1 | **Bot AI.** All four behaviours the assignment lists are queries the existing pieces already answer — see the block comment in `World::update`. | `logic/src/World.cpp` |
-| 2 | **Sprites and animations.** The four views draw flat coloured boxes. Needed: a walking animation per direction, a death animation, a ticking bomb, a growing-and-fading explosion. `sif::ui::Animation` already does the frame timing, so this is authoring `*.asset.json` descriptors, not writing animation code. | `view/src/EntityViews.cpp` |
-| 3 | **Sound.** `sif::audio::AudioPlayer` is created and passed around but nothing plays yet: explosion, death, victory, background music. | `view/src/Game.cpp`, states |
+| ~~18~~ | ~~Strip packing belongs in sif~~ — **done**: `sif_sprite_packer` now ships with the engine (`sif/tools/`), is built by CMake and is run by this project's `bomberman_assets` target. The Python script is gone. | |
+| ~~2~~ | ~~Sprites and animations~~ — **done**: walk per direction, idle, death, ticking bomb, growing explosion, tile art. Built by `sif_sprite_packer` from `assets/sprites.pack.json`. | |
+| ~~3~~ | ~~Sound~~ — **done**: `view::AudioDirector` turns gameplay events into sound. Still missing: menu navigation sound and background music. | `view/src/AudioDirector.cpp` |
 | 4 | **HUD as a real UI tree.** The labels are placed by hand with an approximate centring formula. Replace them with a `*.ui.xml` scene through sif's layout engine, which measures text with the real font metrics. | `view/src/state/States.cpp` |
 | 5 | **Player name entry** on the game-over screen. `ScoreBoard` already stores a name per entry; it is hard-coded to `"player"`. | `view/src/state/States.cpp` |
 | 6 | **Tuning values into JSON.** `WorldConfig`, `ScoreRules` and the constants in `Character.cpp` are struct literals. sif's asset pipeline reads arbitrary JSON already. | `logic/include/bomberman/logic/World.h`, `logic/src/entity/Character.cpp` |

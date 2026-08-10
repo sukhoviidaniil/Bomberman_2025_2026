@@ -11,6 +11,7 @@
 #include "bomberman/logic/grid/TileGrid.h"
 
 #include <algorithm>
+#include <map>
 #include <stdexcept>
 
 #include "sif/internal/Random.h"
@@ -27,6 +28,7 @@ namespace bomberman::logic {
             throw std::invalid_argument("TileGrid: an arena needs at least one row and one column");
         }
         recompute_projection();
+        spawns_ = default_spawn_cells();
     }
 
     void TileGrid::recompute_projection() {
@@ -137,7 +139,11 @@ namespace bomberman::logic {
         return false;
     }
 
-    std::vector<TilePos> TileGrid::spawn_cells() const {
+    const std::vector<TilePos> & TileGrid::spawn_cells() const {
+        return spawns_;
+    }
+
+    std::vector<TilePos> TileGrid::default_spawn_cells() const {
         const int last_row = static_cast<int>(rows_) - 1;
         const int last_col = static_cast<int>(columns_) - 1;
         return {
@@ -146,6 +152,73 @@ namespace bomberman::logic {
             {last_row, 0},
             {last_row, last_col}
         };
+    }
+
+    TileGrid TileGrid::from_layout(const std::vector<std::string> &layout) {
+        if (layout.empty() || layout.front().empty()) {
+            throw std::invalid_argument("TileGrid::from_layout - the layout is empty");
+        }
+
+        const std::size_t columns = layout.front().size();
+        for (std::size_t row = 0; row < layout.size(); ++row) {
+            if (layout[row].size() != columns) {
+                throw std::invalid_argument(
+                    "TileGrid::from_layout - row " + std::to_string(row) +
+                    " has a different width than the first row");
+            }
+        }
+
+        TileGrid grid(layout.size(), columns);
+
+        // Spawns are collected in digit order, not in reading order, so
+        // '1' is always the player wherever it appears in the file.
+        std::map<char, TilePos> spawns_by_digit;
+
+        for (std::size_t row = 0; row < layout.size(); ++row) {
+            for (std::size_t col = 0; col < columns; ++col) {
+                const TilePos cell{static_cast<int>(row), static_cast<int>(col)};
+                const char c = layout[row][col];
+
+                switch (c) {
+                    case '#':
+                        grid.set_tile(cell, Tile::Indestructible);
+                        break;
+                    case '+':
+                    case '*':
+                        grid.set_tile(cell, Tile::Destructible);
+                        break;
+                    case '.':
+                    case ' ':
+                        grid.set_tile(cell, Tile::Free);
+                        break;
+                    case '1': case '2': case '3': case '4':
+                        grid.set_tile(cell, Tile::Free);
+                        spawns_by_digit.emplace(c, cell);
+                        break;
+                    default:
+                        throw std::invalid_argument(
+                            std::string("TileGrid::from_layout - unknown character '") + c +
+                            "' at row " + std::to_string(row) + ", column " + std::to_string(col) +
+                            " (expected one of # + * . space 1 2 3 4)");
+                }
+            }
+        }
+
+        if (!spawns_by_digit.empty()) {
+            grid.spawns_.clear();
+            for (const auto& [digit, cell] : spawns_by_digit) {
+                grid.spawns_.push_back(cell);
+            }
+        }
+
+        return grid;
+    }
+
+    void TileGrid::generate_arena(const float destructible_chance, const std::uint32_t seed) {
+        // Restarting the shared stream is what makes the arena
+        // reproducible; see the note on the declaration.
+        sif::intrnl::Random::instance().seed(seed);
+        generate_arena(destructible_chance);
     }
 
     void TileGrid::generate_arena(const float destructible_chance) {
@@ -176,7 +249,7 @@ namespace bomberman::logic {
         // 3. Clear each spawn and its two orthogonal neighbours, so every
         //    character can place a first bomb and still step out of the
         //    blast. Without this the game can be lost before it starts.
-        for (const TilePos& spawn : spawn_cells()) {
+        for (const TilePos& spawn : spawns_) {
             set_tile(spawn, Tile::Free);
             for (std::size_t i = 0; i < direction_count; ++i) {
                 const TilePos next = neighbour(spawn, by_index(i));

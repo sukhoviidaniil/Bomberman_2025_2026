@@ -112,15 +112,20 @@ namespace bomberman::view {
 
     // ===================== LevelState =====================
 
-    void LevelState::on_enter(StateManager & /*manager*/) {
+    void LevelState::on_enter(StateManager &manager) {
+        const logic::GameConfig& config = manager.game().config();
+
+        assets_ = &manager.game().assets();
         world_bus_ = std::make_shared<sif::event::Event_Bus>();
 
-        // Order matters: Score subscribes to the bus before the World can
+        // Order matters: both observers subscribe before the World can
         // emit anything, so no event of the first frame is missed.
-        score_ = std::make_unique<logic::Score>(world_bus_);
+        score_ = std::make_unique<logic::Score>(world_bus_, config.score);
+        audio_ = std::make_unique<AudioDirector>(
+            world_bus_, manager.game().audio(), manager.game().assets(), config.audio);
 
-        factory_ = std::make_shared<SFMLEntityFactory>(views_);
-        world_ = std::make_unique<logic::World>(world_bus_, factory_);
+        factory_ = std::make_shared<SFMLEntityFactory>(views_, manager.game().assets());
+        world_ = std::make_unique<logic::World>(world_bus_, factory_, config.map, config.round);
         world_->start_round();
     }
 
@@ -130,6 +135,7 @@ namespace bomberman::view {
         }
 
         world_->update(dt);
+        views_.update(dt);
 
         if (world_->round_over() && !handed_over_) {
             handed_over_ = true;
@@ -155,12 +161,12 @@ namespace bomberman::view {
     }
 
     void LevelState::append_render_items(sif::rnd::RenderFrame &frame, const DrawContext &ctx) const {
-        if (world_ == nullptr) {
+        if (world_ == nullptr || assets_ == nullptr) {
             return;
         }
 
-        ArenaView::append_render_items(world_->grid(), frame, ctx.camera);
-        const_cast<ViewRegistry&>(views_).append_render_items(frame, ctx.camera);
+        ArenaView::append_render_items(world_->grid(), *assets_, frame, ctx.camera);
+        views_.append_render_items(frame, ctx.camera);
 
         if (score_ != nullptr) {
             text(frame, ctx, "SCORE  " + std::to_string(score_->points()), 16.f, 24, text_color);
