@@ -15,6 +15,7 @@
 #include <string>
 #include <vector>
 
+#include "bomberman/logic/PowerUpRules.h"
 #include "bomberman/logic/Score.h"
 #include "bomberman/logic/ai/BotBrain.h"
 
@@ -40,9 +41,6 @@ namespace bomberman::logic {
 
         /// Probability that a free cell becomes a destructible block.
         float destructible_chance = 0.75f;
-
-        /// Probability that destroying a block reveals a power-up.
-        float power_up_chance = 0.25f;
 
         /// Seed for procedural generation; empty means "use the global stream".
         std::optional<std::uint32_t> seed;
@@ -112,6 +110,7 @@ namespace bomberman::logic {
 
         MapConfig map;
         RoundConfig round;
+        PowerUpRules power_ups;
         ScoreRules score;
         WindowConfig window;
         AudioConfig audio;

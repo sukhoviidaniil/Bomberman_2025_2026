@@ -45,7 +45,8 @@ namespace bomberman::view {
             float lifetime_seconds, bool from_player) override;
 
         [[nodiscard]] std::shared_ptr<logic::PowerUp> make_power_up(
-            sif::math::Point2 position, float size, logic::TilePos cell, logic::PowerUpKind kind) override;
+            sif::math::Point2 position, float size, logic::TilePos cell, logic::PowerUpKind kind,
+            float shield_seconds) override;
 
     private:
         ViewRegistry& views_;

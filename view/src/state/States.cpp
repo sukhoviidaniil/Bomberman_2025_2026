@@ -13,6 +13,7 @@
 #include <utility>
 
 #include "bomberman/view/ArenaView.h"
+#include "bomberman/view/AssetNames.h"
 #include "bomberman/view/Game.h"
 
 #include "sif/render/elements/Rectangle.h"
@@ -79,14 +80,24 @@ namespace bomberman::view {
         switch (key) {
             case sif::event::input::Key::Enter:
             case sif::event::input::Key::Space:
+                click(manager);
                 manager.push(std::make_unique<LevelState>());
                 break;
             case sif::event::input::Key::Escape:
+                click(manager);
                 manager.quit();
                 break;
             default:
                 break;
         }
+    }
+
+    void MenuState::click(StateManager &manager) {
+        // A menu that answers a key press with silence feels broken even
+        // when it is not; sfx_menu was loaded from the first commit and
+        // never played.
+        manager.game().audio().play(
+            manager.game().assets().sound(assets::sfx_menu), 0.8f);
     }
 
     void MenuState::append_render_items(sif::rnd::RenderFrame &frame, const DrawContext &ctx) const {
@@ -125,7 +136,8 @@ namespace bomberman::view {
             world_bus_, manager.game().audio(), manager.game().assets(), config.audio);
 
         factory_ = std::make_shared<SFMLEntityFactory>(views_, manager.game().assets());
-        world_ = std::make_unique<logic::World>(world_bus_, factory_, config.map, config.round);
+        world_ = std::make_unique<logic::World>(
+            world_bus_, factory_, config.map, config.round, config.power_ups);
         world_->start_round();
     }
 
@@ -170,6 +182,21 @@ namespace bomberman::view {
 
         if (score_ != nullptr) {
             text(frame, ctx, "SCORE  " + std::to_string(score_->points()), 16.f, 24, text_color);
+        }
+
+        // The three stats the power-ups exist to change. Without them a
+        // player has no way to tell that a pick-up did anything, which
+        // makes the whole mechanic invisible.
+        if (const auto& player = world_->player(); player != nullptr) {
+            const float speed_percent = player->power_up_rules().max_speed > 0.f
+                ? player->speed() / player->power_up_rules().max_speed * 100.f
+                : 0.f;
+
+            text(frame, ctx,
+                 "FIRE " + std::to_string(player->blast_radius())
+                 + "    BOMBS " + std::to_string(player->bomb_budget())
+                 + "    SPEED " + std::to_string(static_cast<int>(speed_percent)) + "%",
+                 46.f, 20, dim_color);
         }
     }
 

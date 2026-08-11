@@ -57,8 +57,6 @@ namespace bomberman::logic {
         config.map.columns = sif::io::get_checked<std::size_t>(map, "columns", config.map.columns);
         config.map.destructible_chance =
             sif::io::get_checked<float>(map, "destructible_chance", config.map.destructible_chance);
-        config.map.power_up_chance =
-            sif::io::get_checked<float>(map, "power_up_chance", config.map.power_up_chance);
         config.map.seed = optional_seed(map, "seed");
 
         if (map.contains("layout") && !map.at("layout").is_null()) {
@@ -92,6 +90,24 @@ namespace bomberman::logic {
                     ai::personality_from_string(entry.get<std::string>()));
             }
         }
+
+        const nlohmann::json power_ups = section(j, "power_ups");
+        config.power_ups.drop_chance =
+            sif::io::get_checked<float>(power_ups, "drop_chance", config.power_ups.drop_chance);
+        config.power_ups.fire_weight =
+            sif::io::get_checked<float>(power_ups, "fire_weight", config.power_ups.fire_weight);
+        config.power_ups.extra_bomb_weight =
+            sif::io::get_checked<float>(power_ups, "extra_bomb_weight", config.power_ups.extra_bomb_weight);
+        config.power_ups.skates_weight =
+            sif::io::get_checked<float>(power_ups, "skates_weight", config.power_ups.skates_weight);
+        config.power_ups.max_blast_radius =
+            sif::io::get_checked<unsigned int>(power_ups, "max_blast_radius", config.power_ups.max_blast_radius);
+        config.power_ups.max_bomb_budget =
+            sif::io::get_checked<std::size_t>(power_ups, "max_bomb_budget", config.power_ups.max_bomb_budget);
+        config.power_ups.skates_speed_bonus =
+            sif::io::get_checked<float>(power_ups, "skates_speed_bonus", config.power_ups.skates_speed_bonus);
+        config.power_ups.max_speed =
+            sif::io::get_checked<float>(power_ups, "max_speed", config.power_ups.max_speed);
 
         const nlohmann::json score = section(j, "score");
         config.score.per_second_alive =
@@ -151,9 +167,7 @@ namespace bomberman::logic {
         if (map.destructible_chance < 0.f || map.destructible_chance > 1.f) {
             throw std::runtime_error("config: map.destructible_chance must be within [0, 1]");
         }
-        if (map.power_up_chance < 0.f || map.power_up_chance > 1.f) {
-            throw std::runtime_error("config: map.power_up_chance must be within [0, 1]");
-        }
+        power_ups.validate();
 
         if (round.character_speed <= 0.f) {
             throw std::runtime_error("config: round.character_speed must be positive");

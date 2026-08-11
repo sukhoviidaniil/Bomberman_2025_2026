@@ -25,7 +25,23 @@ namespace bomberman::logic {
      */
     class PowerUp : public Entity {
     public:
-        PowerUp(sif::math::Point2 position, float size, TilePos cell, PowerUpKind kind);
+        /**
+         * @param shield_seconds How long this pick-up ignores fire.
+         *
+         * A power-up is revealed *by* a blast, in the very cell that blast
+         * is burning. Without a shield it is destroyed on the frame it
+         * appears - which is what happened here until a test asked whether
+         * any pick-up ever survived. Passing the explosion's own lifetime
+         * means "the item appears once the fire clears", which is also how
+         * it reads on screen.
+         */
+        PowerUp(sif::math::Point2 position, float size, TilePos cell, PowerUpKind kind,
+                float shield_seconds = 0.f);
+
+        void update(float dt) override;
+
+        /// @brief True while fire cannot destroy this pick-up.
+        [[nodiscard]] bool shielded() const;
 
         [[nodiscard]] PowerUpKind kind() const;
         [[nodiscard]] const TilePos& cell() const;
@@ -33,6 +49,7 @@ namespace bomberman::logic {
     private:
         TilePos cell_;
         PowerUpKind kind_;
+        float shield_remaining_ = 0.f;
     };
 }
 

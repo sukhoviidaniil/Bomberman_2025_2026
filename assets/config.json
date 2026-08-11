@@ -29,9 +29,23 @@
         "rows": 11,
         "columns": 13,
         "destructible_chance": 0.75,
-        "power_up_chance": 0.25,
         "seed": 20260806,
         "layout": null
+    },
+
+    "power_ups": {
+        "drop_chance": 0.25,
+
+        "_weights": "Relative odds once something drops; only the ratio matters. Set one to 0 to remove that power-up from the game.",
+        "fire_weight": 1.0,
+        "extra_bomb_weight": 1.0,
+        "skates_weight": 0.7,
+
+        "_caps": "Upper bounds, so a lucky run cannot produce an unplayable game.",
+        "max_blast_radius": 8,
+        "max_bomb_budget": 8,
+        "skates_speed_bonus": 0.12,
+        "max_speed": 1.1
     },
 
     "round": {

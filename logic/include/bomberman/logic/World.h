@@ -42,11 +42,13 @@ namespace bomberman::logic {
          * @param map How the arena is produced: explicit layout, seed, or
          * neither.
          * @param round Speeds, timings and how many bots to spawn.
+         * @param power_ups Drop odds, caps and what each pick-up is worth.
          */
         World(std::shared_ptr<sif::event::Event_Bus> bus,
               std::shared_ptr<IEntityFactory> factory,
               MapConfig map = {},
-              RoundConfig round = {});
+              RoundConfig round = {},
+              PowerUpRules power_ups = {});
 
         World(const World&) = delete;
         World& operator=(const World&) = delete;
@@ -122,6 +124,7 @@ namespace bomberman::logic {
         std::shared_ptr<IEntityFactory> factory_;
         MapConfig map_;
         RoundConfig round_;
+        PowerUpRules power_ups_;
 
         TileGrid grid_;
 
@@ -146,7 +149,7 @@ namespace bomberman::logic {
         std::vector<std::shared_ptr<Character>> characters_;
         std::vector<std::shared_ptr<Bomb>> bombs_;
         std::vector<std::shared_ptr<Explosion>> explosions_;
-        std::vector<std::shared_ptr<PowerUp>> power_ups_;
+        std::vector<std::shared_ptr<PowerUp>> power_ups_entities_;
 
         bool round_over_ = false;
         bool player_won_ = false;

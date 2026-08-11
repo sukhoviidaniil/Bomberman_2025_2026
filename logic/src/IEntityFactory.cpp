@@ -33,7 +33,8 @@ namespace bomberman::logic {
     }
 
     std::shared_ptr<PowerUp> HeadlessEntityFactory::make_power_up(
-        const sif::math::Point2 position, const float size, const TilePos cell, const PowerUpKind kind) {
-        return std::make_shared<PowerUp>(position, size, cell, kind);
+        const sif::math::Point2 position, const float size, const TilePos cell,
+        const PowerUpKind kind, const float shield_seconds) {
+        return std::make_shared<PowerUp>(position, size, cell, kind, shield_seconds);
     }
 }

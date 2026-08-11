@@ -1,0 +1,110 @@
+@startuml patterns
+title Bomberman - the required design patterns, and who plays which role
+
+' One diagram per pattern, showing only the participants. This is the
+' diagram to bring to the defence: everything else is detail.
+
+package "Model-View-Controller" #FDF6E3 {
+    class "logic::World" as MVC_C <<Controller>>
+    class "logic::Entity\n(Character, Bomb, ...)" as MVC_M <<Model>>
+    class "view::EntityView\n(CharacterView, BombView, ...)" as MVC_V <<View>>
+
+    MVC_C *-- MVC_M : owns and updates
+    MVC_M <.. MVC_V : observes
+    note bottom of MVC_C
+        The World is the entity controller: it creates,
+        destroys and collides entities. It holds no SFML
+        type, which is why bomberman_logic links no
+        graphics library at all - enforced by the linker,
+        not by discipline.
+    end note
+}
+
+package "Observer" #EEE8D5 {
+    class "sif::event::Event_Bus" as OB_S <<Subject>>
+    class "view::EntityView" as OB_V <<Observer>>
+    class "logic::Score" as OB_SC <<Observer>>
+    class "view::AudioDirector" as OB_A <<Observer>>
+
+    OB_S <.. OB_V : entity bus\n(direction, death, fuse)
+    OB_S <.. OB_SC : world bus\n(blocks, pick-ups, kills)
+    OB_S <.. OB_A : world bus\n(bomb, explosion, round end)
+
+    note bottom of OB_SC
+        Score is told nothing directly. No rule in the
+        logic library mentions scoring, so the formula
+        can change without touching the World - which is
+        the point of the pattern rather than a side
+        effect of it.
+    end note
+}
+
+package "Abstract Factory" #E3F6FD {
+    interface "logic::IEntityFactory" as AF_I <<abstract factory>>
+    class "view::SFMLEntityFactory" as AF_C <<concrete factory>>
+    class "logic::HeadlessEntityFactory" as AF_H <<concrete factory>>
+    class "logic::World" as AF_W <<client>>
+
+    AF_I <|.. AF_C
+    AF_I <|.. AF_H
+    AF_W --> AF_I
+
+    note bottom of AF_C
+        The interface lives in the logic library, the
+        implementation in the representation layer, and
+        Game hands the concrete one to the World - exactly
+        the arrangement the assignment describes.
+        HeadlessEntityFactory is the same interface with no
+        views, which is what lets the tests run a whole
+        round without a window.
+    end note
+}
+
+package "Singleton" #F6E3FD {
+    class "sif::intrnl::Delta_Timer" as SG_T <<singleton>>
+    class "sif::intrnl::Random" as SG_R <<singleton>>
+
+    note bottom of SG_R
+        Both are Meyers singletons in the engine, with
+        copy and move deleted - a singleton that can be
+        copied is not one. Random is seeded from
+        config.random_seed, which is what makes a whole
+        session reproducible.
+    end note
+}
+
+package "State (kept by choice, no longer required)" #F0F0F0 {
+    class "view::StateManager" as ST_C <<context>>
+    abstract class "view::State" as ST_S
+    class "MenuState / LevelState /\nPausedState / GameOverState" as ST_CS
+
+    ST_C o-- ST_S
+    ST_S <|-- ST_CS
+
+    note bottom of ST_C
+        A stack, so pausing pushes and resuming pops with
+        the level untouched underneath. Transitions are
+        queued and applied at the end of the frame: a state
+        that pushed its successor from inside its own
+        update() would otherwise be destroyed mid-call.
+    end note
+}
+
+package "Strategy + Chain of Responsibility (bot AI)" #E3FDE8 {
+    class "logic::ai::BotBrain" as AI_B
+    abstract class "logic::ai::BotBehaviour" as AI_S <<strategy>>
+    class "Survive / Collect / Break /\nHunt / Wander" as AI_CS
+
+    AI_B o-- AI_S : ordered by priority
+    AI_S <|-- AI_CS
+
+    note bottom of AI_B
+        The assignment lists the AI as conditions, not as
+        modes, so the brain asks its behaviours in order
+        and takes the first answer. A "personality" is
+        therefore a different order of the same objects -
+        the listed bonus, for no new code.
+    end note
+}
+
+@enduml

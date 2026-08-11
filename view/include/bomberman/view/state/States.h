@@ -39,6 +39,9 @@ namespace bomberman::view {
         void on_resume() override;
 
     private:
+        /// @brief Plays the menu blip; a key press should be audible.
+        static void click(StateManager& manager);
+
         StateManager* manager_ = nullptr;
         float elapsed_ = 0.f;
     };

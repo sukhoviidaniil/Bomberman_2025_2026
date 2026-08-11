@@ -21,9 +21,9 @@ namespace bomberman::logic {
 
     World::World(std::shared_ptr<sif::event::Event_Bus> bus,
                  std::shared_ptr<IEntityFactory> factory,
-                 MapConfig map, RoundConfig round)
+                 MapConfig map, RoundConfig round, PowerUpRules power_ups)
         : bus_(std::move(bus)), factory_(std::move(factory))
-        , map_(std::move(map)), round_(round) {
+        , map_(std::move(map)), round_(round), power_ups_(power_ups) {
 
         if (bus_ == nullptr || factory_ == nullptr) {
             throw std::invalid_argument("World: an event bus and an entity factory are required");
@@ -35,7 +35,7 @@ namespace bomberman::logic {
         bots_.clear();
         bombs_.clear();
         explosions_.clear();
-        power_ups_.clear();
+        power_ups_entities_.clear();
         player_.reset();
         round_over_ = false;
         player_won_ = false;
@@ -116,6 +116,9 @@ namespace bomberman::logic {
         for (const auto& explosion : explosions_) {
             explosion->update(dt);
         }
+        for (const auto& power_up : power_ups_entities_) {
+            power_up->update(dt);
+        }
 
         resolve_detonations();
         resolve_collisions();
@@ -145,6 +148,7 @@ namespace bomberman::logic {
         // Capturing `this` is safe: the World owns every character and
         // outlives them all.
         character->set_obstacle_check([this](const TilePos& cell) { return has_bomb_at(cell); });
+        character->set_power_up_rules(power_ups_);
     }
 
     void World::update_bots(const float dt) {
@@ -181,7 +185,7 @@ namespace bomberman::logic {
                 *bot,
                 *cell,
                 characters_,
-                power_ups_,
+                power_ups_entities_,
                 [this](const TilePos& c) { return has_bomb_at(c); },
                 round_.bomb_fuse_seconds,
                 // Tiles per second: the bot reasons in cells, the world
@@ -305,11 +309,17 @@ namespace bomberman::logic {
                     grid_.set_tile(cell, Tile::Free);
                     bus_->emit(game_events::BlockDestroyed{cell, from_player});
 
-                    // A destroyed block may reveal a pick-up.
-                    if (sif::intrnl::rand_chance(map_.power_up_chance)) {
-                        const auto kind = static_cast<PowerUpKind>(sif::intrnl::rand_index(3));
-                        power_ups_.push_back(factory_->make_power_up(
-                            grid_.get_center(cell), tile * 0.7f, cell, kind));
+                    // A destroyed block may reveal a pick-up. It is shielded
+                    // for as long as this blast burns: it appears in the very
+                    // cell that is on fire, and without the shield the next
+                    // line of resolve_collisions would destroy it on the frame
+                    // it was created - which is exactly what used to happen,
+                    // so no power-up ever reached the player.
+                    if (sif::intrnl::rand_chance(power_ups_.drop_chance)) {
+                        const PowerUpKind kind = power_ups_.roll_kind();
+                        power_ups_entities_.push_back(factory_->make_power_up(
+                            grid_.get_center(cell), tile * 0.7f, cell, kind,
+                            round_.explosion_seconds));
                     }
 
                     break; // "only through one destructible block at a time"
@@ -320,6 +330,14 @@ namespace bomberman::logic {
 
     void World::resolve_collisions() {
         for (const auto& explosion : explosions_) {
+            // An explosion that finished this frame has stopped burning;
+            // letting it still destroy things gives it one extra frame of
+            // reach, which is exactly long enough to eat a power-up whose
+            // reveal shield ran out on the very same tick.
+            if (explosion->expired()) {
+                continue;
+            }
+
             // Characters caught in the fire.
             for (const auto& character : characters_) {
                 if (!character->alive() || !intersects(character->box(), explosion->box(), 0.f)) {
@@ -334,15 +352,16 @@ namespace bomberman::logic {
             }
 
             // Pick-ups burn as well.
-            for (const auto& power_up : power_ups_) {
-                if (!power_up->expired() && power_up->cell() == explosion->cell()) {
+            for (const auto& power_up : power_ups_entities_) {
+                if (!power_up->expired() && !power_up->shielded()
+                    && power_up->cell() == explosion->cell()) {
                     power_up->expire();
                 }
             }
         }
 
         // Characters walking over pick-ups.
-        for (const auto& power_up : power_ups_) {
+        for (const auto& power_up : power_ups_entities_) {
             if (power_up->expired()) {
                 continue;
             }
@@ -365,7 +384,7 @@ namespace bomberman::logic {
         };
         drop(bombs_);
         drop(explosions_);
-        drop(power_ups_);
+        drop(power_ups_entities_);
         // Dead characters are kept: their view still has a death
         // animation to play, and the round-over check counts them.
     }
@@ -400,7 +419,7 @@ namespace bomberman::logic {
     const std::vector<std::shared_ptr<Character>> & World::characters() const { return characters_; }
     const std::vector<std::shared_ptr<Bomb>> & World::bombs() const { return bombs_; }
     const std::vector<std::shared_ptr<Explosion>> & World::explosions() const { return explosions_; }
-    const std::vector<std::shared_ptr<PowerUp>> & World::power_ups() const { return power_ups_; }
+    const std::vector<std::shared_ptr<PowerUp>> & World::power_ups() const { return power_ups_entities_; }
     bool World::round_over() const { return round_over_; }
     bool World::player_won() const { return player_won_; }
 }

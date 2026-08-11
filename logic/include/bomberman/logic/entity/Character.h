@@ -13,6 +13,7 @@
 #include <cstddef>
 #include <functional>
 
+#include "bomberman/logic/PowerUpRules.h"
 #include "bomberman/logic/entity/Actor.h"
 #include "bomberman/logic/events/GameEvents.h"
 
@@ -59,6 +60,19 @@ namespace bomberman::logic {
          */
         void apply(PowerUpKind kind);
 
+        /**
+         * @brief Installs the balance a power-up is applied against.
+         *
+         * Held per character rather than looked up globally, so a future
+         * mode ("the player caps out later than the bots") is a different
+         * value rather than a different code path. Defaults to the rules'
+         * own defaults, which is what keeps a Character usable in a test
+         * without a configuration file.
+         */
+        void set_power_up_rules(const PowerUpRules& rules);
+
+        [[nodiscard]] const PowerUpRules& power_up_rules() const;
+
         // ===== Standing on a bomb =====
 
         /**
@@ -98,6 +112,7 @@ namespace bomberman::logic {
         TilePos pass_cell_{};
 
         std::function<bool(const TilePos&)> obstacle_check_;
+        PowerUpRules rules_;
     };
 }
 

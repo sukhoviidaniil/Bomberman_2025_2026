@@ -21,11 +21,10 @@
 
 include(FetchContent)
 
-# TODO(daniil): replace the placeholder below with the real repository URL
-#  and pin SIF_GIT_TAG to a release tag before submitting. A moving branch
+# TODO(daniil): pin SIF_GIT_TAG to a release tag before submitting. A moving branch
 #  makes the build non-reproducible, which is exactly what a grader (and
 #  CI) will notice first.
-set(SIF_GIT_REPOSITORY "https://github.com/DaniilSukhovii/sif.git"
+set(SIF_GIT_REPOSITORY "https://github.com/sukhoviidaniil/sif.git"
         CACHE STRING "Git repository the sif engine is fetched from")
 set(SIF_GIT_TAG "main"
         CACHE STRING "Git tag/branch/commit of the sif engine to build against")

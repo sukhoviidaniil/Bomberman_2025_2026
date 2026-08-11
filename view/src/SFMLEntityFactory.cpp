@@ -71,9 +71,9 @@ namespace bomberman::view {
 
     std::shared_ptr<logic::PowerUp> SFMLEntityFactory::make_power_up(
         const sif::math::Point2 position, const float size,
-        const logic::TilePos cell, const logic::PowerUpKind kind) {
+        const logic::TilePos cell, const logic::PowerUpKind kind, const float shield_seconds) {
 
-        auto model = std::make_shared<logic::PowerUp>(position, size, cell, kind);
+        auto model = std::make_shared<logic::PowerUp>(position, size, cell, kind, shield_seconds);
         views_.add(std::make_shared<PowerUpView>(model, assets_));
         return model;
     }

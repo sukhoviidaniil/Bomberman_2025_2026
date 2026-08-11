@@ -1,0 +1,110 @@
+@startuml view
+title Bomberman - representation (the only SFML consumer)
+
+package "bomberman::view" {
+
+    class Game {
+        -renderer_, collector_, audio_
+        -camera_ : sif::rnd::Camera
+        -assets_ : GameAssets
+        -states_ : StateManager
+        +run()
+        +config(), assets(), audio(), ui_font()
+    }
+
+    class StateManager {
+        -stack_ : vector<unique_ptr<State>>
+        -pending_ : vector<Pending>
+        +push(state), pop(), pop_to_depth(n)
+        +update(dt), on_key(key)
+        +flush()
+    }
+
+    abstract class State {
+        +{abstract} update(manager, dt)
+        +{abstract} on_key(manager, key)
+        +{abstract} append_render_items(frame, ctx)
+        +draws_below() : bool
+    }
+
+    class MenuState
+    class LevelState {
+        -world_ : logic::World
+        -views_ : ViewRegistry
+        -factory_ : SFMLEntityFactory
+        -score_ : logic::Score
+        -audio_ : AudioDirector
+    }
+    class PausedState
+    class GameOverState
+
+    State <|-- MenuState
+    State <|-- LevelState
+    State <|-- PausedState
+    State <|-- GameOverState
+
+    class SFMLEntityFactory <<Concrete Factory>> {
+        +make_character(...), make_bomb(...)
+        +make_explosion(...), make_power_up(...)
+    }
+
+    abstract class EntityView <<Observer>> {
+        #model_ : weak_ptr<Entity>
+        #elapsed_ : float
+        +update(dt)
+        +{abstract} append_render_items(frame, camera)
+        #append_animation(...), append_sprite(...)
+    }
+    class CharacterView
+    class BombView
+    class ExplosionView
+    class PowerUpView
+
+    EntityView <|-- CharacterView
+    EntityView <|-- BombView
+    EntityView <|-- ExplosionView
+    EntityView <|-- PowerUpView
+
+    class ViewRegistry {
+        +add(view), update(dt)
+        +append_render_items(frame, camera)
+    }
+
+    class ArenaView <<static>>
+    class AudioDirector <<Observer>>
+    class GameAssets {
+        +animation(name), sprite(name)
+        +sound(name), font(name)
+        +player_walk(dir), tile(t), item(kind)
+    }
+}
+
+Game *-- StateManager
+Game *-- GameAssets
+StateManager o-- State
+LevelState *-- SFMLEntityFactory
+LevelState *-- ViewRegistry
+LevelState *-- AudioDirector
+ViewRegistry o-- EntityView
+SFMLEntityFactory ..> EntityView : creates and subscribes
+SFMLEntityFactory ..|> "logic::IEntityFactory"
+EntityView --> GameAssets
+ArenaView --> GameAssets
+AudioDirector --> GameAssets
+
+note right of SFMLEntityFactory
+  Builds the model, builds its view, subscribes
+  the view to the model's bus, returns the model.
+  That subscription is the whole Observer wiring -
+  no state has to remember to connect anything.
+end note
+
+note bottom of EntityView
+  Pushed: direction, death, fuse-critical - the
+  events that decide which animation plays.
+  Pulled: position, which changes every tick
+  anyway, so an event per frame would carry no
+  extra information.
+end note
+
+@enduml

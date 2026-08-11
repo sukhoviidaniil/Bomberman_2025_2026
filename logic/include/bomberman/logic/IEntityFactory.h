@@ -63,7 +63,8 @@ namespace bomberman::logic {
             float lifetime_seconds, bool from_player) = 0;
 
         [[nodiscard]] virtual std::shared_ptr<PowerUp> make_power_up(
-            sif::math::Point2 position, float size, TilePos cell, PowerUpKind kind) = 0;
+            sif::math::Point2 position, float size, TilePos cell, PowerUpKind kind,
+            float shield_seconds) = 0;
 
     protected:
         IEntityFactory() = default;
@@ -90,7 +91,8 @@ namespace bomberman::logic {
             float lifetime_seconds, bool from_player) override;
 
         [[nodiscard]] std::shared_ptr<PowerUp> make_power_up(
-            sif::math::Point2 position, float size, TilePos cell, PowerUpKind kind) override;
+            sif::math::Point2 position, float size, TilePos cell, PowerUpKind kind,
+            float shield_seconds) override;
     };
 }
 

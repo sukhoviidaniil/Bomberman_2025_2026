@@ -1,0 +1,142 @@
+@startuml logic
+title Bomberman - logic library (links sif only; no SFML)
+
+package "bomberman::logic" {
+
+    class World <<entity controller>> {
+        -grid_ : TileGrid
+        -characters_, bombs_, explosions_, power_ups_
+        -danger_ : ai::DangerMap
+        -bots_ : vector<BotSlot>
+        +start_round()
+        +update(dt)
+        +set_player_direction(dir)
+        +player_place_bomb()
+        -spread_blast(bomb)
+        -resolve_detonations()
+        -resolve_collisions()
+        -update_bots(dt)
+    }
+
+    abstract class Entity {
+        +position(), size(), box()
+        +expired(), expire()
+        +update(dt)
+        +bus() : Event_Bus
+    }
+
+    abstract class Actor {
+        +set_direction(dir)
+        +move(dt, grid)
+        #{abstract} can_enter(cell, grid)
+    }
+
+    class Character {
+        +kind(), alive(), kill()
+        +blast_radius(), bomb_budget()
+        +can_place_bomb()
+        +apply(PowerUpKind)
+        +set_power_up_rules(rules)
+        +set_obstacle_check(fn)
+    }
+
+    class Bomb {
+        +cell(), radius(), owner()
+        +fuse_remaining()
+        +detonate()
+    }
+
+    class Explosion {
+        +cell(), progress(), from_player()
+    }
+
+    class PowerUp {
+        +kind(), cell()
+        +shielded()
+    }
+
+    Entity <|-- Actor
+    Entity <|-- Bomb
+    Entity <|-- Explosion
+    Entity <|-- PowerUp
+    Actor <|-- Character
+
+    class TileGrid {
+        +generate_arena(chance)
+        +generate_arena(chance, seed)
+        +{static} from_layout(layout)
+        +get_TilePos(point), get_center(cell)
+        +spawn_cells()
+    }
+    enum Tile { Free \n Indestructible \n Destructible }
+    struct TilePos { +row : int \n +col : int }
+
+    class Score <<Observer>> {
+        +points()
+    }
+    class ScoreBoard {
+        +load(file), save(file)
+        +submit(entry), qualifies(points)
+    }
+
+    struct GameConfig {
+        +random_seed
+        +map : MapConfig
+        +round : RoundConfig
+        +power_ups : PowerUpRules
+        +score : ScoreRules
+        +window, audio
+        +{static} load(path)
+    }
+
+    struct PowerUpRules {
+        +drop_chance, weights
+        +caps, skates_speed_bonus
+        +roll_kind() : PowerUpKind
+    }
+
+    interface IEntityFactory <<Abstract Factory>> {
+        +{abstract} make_character(...)
+        +{abstract} make_bomb(...)
+        +{abstract} make_explosion(...)
+        +{abstract} make_power_up(...)
+    }
+    class HeadlessEntityFactory
+
+    IEntityFactory <|.. HeadlessEntityFactory
+
+    package events {
+        struct "entity_events::Moved / MotionChanged / Died / FuseCritical" as EE
+        struct "game_events::Tick / BombPlaced / BombExploded /\nBlockDestroyed / PowerUpTaken / CharacterKilled / RoundEnded" as GE
+    }
+}
+
+World *-- Character
+World *-- Bomb
+World *-- Explosion
+World *-- PowerUp
+World *-- TileGrid
+World --> IEntityFactory : creates entities through
+World ..> GE : publishes on the world bus
+Entity ..> EE : publishes on its own bus
+Score ..> GE : observes
+Character --> PowerUpRules
+TileGrid --> Tile
+TileGrid --> TilePos
+World --> GameConfig : map / round / power_ups
+
+note right of World
+  The World never learns that views exist.
+  It asks IEntityFactory for an entity and
+  gets a model back; whether a view was
+  attached on the way is the representation
+  layer's business.
+end note
+
+note bottom of TileGrid
+  The arena maps itself into [-1, 1] on both
+  axes, so no speed constant is tied to a tile
+  size and the logic is resolution independent.
+end note
+
+@enduml

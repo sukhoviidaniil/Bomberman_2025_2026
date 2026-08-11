@@ -75,7 +75,8 @@ SIF_TEST(an_empty_config_object_keeps_every_default) {
 SIF_TEST(config_values_override_the_defaults) {
     const GameConfig config = GameConfig::load(temp_config("bm_values.json", R"({
         "random_seed": 42,
-        "map": { "rows": 9, "columns": 15, "seed": 7, "power_up_chance": 0.5 },
+        "map": { "rows": 9, "columns": 15, "seed": 7 },
+        "power_ups": { "drop_chance": 0.5, "skates_weight": 0.0, "max_blast_radius": 3 },
         "round": { "bot_count": 1, "bomb_fuse_seconds": 3.0 },
         "score": { "per_enemy_killed": 999 },
         "window": { "width": 1280, "height": 800, "title": "custom" },
@@ -84,6 +85,9 @@ SIF_TEST(config_values_override_the_defaults) {
 
     SIF_CHECK(config.random_seed.has_value() && *config.random_seed == 42u);
     SIF_CHECK(config.map.rows == 9 && config.map.columns == 15);
+    SIF_CHECK(config.power_ups.drop_chance == 0.5f);
+    SIF_CHECK(config.power_ups.skates_weight == 0.f);
+    SIF_CHECK(config.power_ups.max_blast_radius == 3);
     SIF_CHECK(config.map.seed.has_value() && *config.map.seed == 7u);
     SIF_CHECK(config.round.bot_count == 1);
     SIF_CHECK(config.score.per_enemy_killed == 999);
@@ -102,7 +106,13 @@ SIF_TEST(invalid_config_values_are_rejected_with_a_reason) {
         (void)GameConfig::load(temp_config("bm_bad1.json", R"({"map": {"rows": 1}})"));
     }));
     SIF_CHECK(throws([] {
-        (void)GameConfig::load(temp_config("bm_bad2.json", R"({"map": {"power_up_chance": 5.0}})"));
+        (void)GameConfig::load(temp_config("bm_bad2.json", R"({"power_ups": {"drop_chance": 5.0}})"));
+    }));
+    SIF_CHECK(throws([] {
+        (void)GameConfig::load(temp_config("bm_bad5.json", R"({"power_ups": {"fire_weight": -1.0}})"));
+    }));
+    SIF_CHECK(throws([] {
+        (void)GameConfig::load(temp_config("bm_bad6.json", R"({"power_ups": {"max_speed": 0.0}})"));
     }));
     SIF_CHECK(throws([] {
         (void)GameConfig::load(temp_config("bm_bad3.json", R"({"round": {"character_speed": -1.0}})"));

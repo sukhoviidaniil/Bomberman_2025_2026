@@ -10,18 +10,10 @@
 
 #include "bomberman/logic/entity/Character.h"
 
+#include <algorithm>
 #include <utility>
 
 namespace bomberman::logic {
-    namespace {
-        /// TODO(daniil): move the tuning constants below into the JSON
-        ///  config once the asset pipeline covers gameplay data, so the
-        ///  balance can be changed without a rebuild.
-        constexpr float skates_speed_bonus = 0.15f;
-        constexpr unsigned int max_blast_radius = 8;
-        constexpr std::size_t max_bomb_budget = 8;
-    }
-
     Character::Character(std::string name, const sif::math::Point2 position, const float size,
                          const float speed, const CharacterKind kind)
         : Actor(std::move(name), position, size, speed), kind_(kind) {
@@ -58,17 +50,29 @@ namespace bomberman::logic {
     }
 
     void Character::apply(const PowerUpKind kind) {
+        // Every effect is permanent and capped. The caps are not decoration:
+        // an uncapped blast radius eventually covers the whole arena, and an
+        // uncapped speed lets a character cross a tile faster than the
+        // grid-snapping can keep up with.
         switch (kind) {
             case PowerUpKind::Fire:
-                blast_radius_ = std::min(blast_radius_ + 1, max_blast_radius);
+                blast_radius_ = std::min(blast_radius_ + 1, rules_.max_blast_radius);
                 break;
             case PowerUpKind::ExtraBomb:
-                bomb_budget_ = std::min(bomb_budget_ + 1, max_bomb_budget);
+                bomb_budget_ = std::min(bomb_budget_ + 1, rules_.max_bomb_budget);
                 break;
             case PowerUpKind::Skates:
-                set_speed(speed() + skates_speed_bonus);
+                set_speed(std::min(speed() + rules_.skates_speed_bonus, rules_.max_speed));
                 break;
         }
+    }
+
+    void Character::set_power_up_rules(const PowerUpRules &rules) {
+        rules_ = rules;
+    }
+
+    const PowerUpRules & Character::power_up_rules() const {
+        return rules_;
     }
 
     void Character::allow_leaving(const TilePos &cell) {

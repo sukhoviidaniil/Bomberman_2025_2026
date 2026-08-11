@@ -431,11 +431,12 @@ SIF_TEST(bots_open_up_the_arena_over_time) {
     map.rows = 9;
     map.columns = 9;
     map.seed = 555u;
-    map.power_up_chance = 0.f; // isolate "do they break blocks"
+    PowerUpRules power_ups;
+    power_ups.drop_chance = 0.f; // isolate "do they break blocks"
 
     const auto bus = std::make_shared<sif::event::Event_Bus>();
     const auto factory = std::make_shared<HeadlessEntityFactory>();
-    World world(bus, factory, map);
+    World world(bus, factory, map, RoundConfig{}, power_ups);
     world.start_round();
 
     const auto count_blocks = [&world] {
