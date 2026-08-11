@@ -11,6 +11,14 @@
         "               each run.",
         "  map.seed     pins only the arena. Useful for 'this map plays",
         "               badly' without freezing everything else.",
+        "",
+        "Bots:",
+        "  bot_personalities  one per bot, cycled if there are fewer entries",
+        "                     than bots. A personality is the order in which a",
+        "                     bot weighs its goals - survival always first,",
+        "                     wandering always last - so 'aggressive' hunts",
+        "                     before it collects, and 'collector' the reverse.",
+        "                     Accepted: balanced, aggressive, collector.",
         "  map.layout   an explicit arena; wins over map.seed. See",
         "               config.handmade.json for the legend and an example."
     ],
@@ -31,7 +39,8 @@
         "character_size": 0.85,
         "bomb_fuse_seconds": 2.0,
         "explosion_seconds": 0.5,
-        "bot_count": 3
+        "bot_count": 3,
+        "bot_personalities": ["balanced", "aggressive", "collector"]
     },
 
     "score": {

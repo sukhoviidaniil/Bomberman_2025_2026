@@ -14,6 +14,8 @@
 #include <vector>
 
 #include "bomberman/logic/Config.h"
+#include "bomberman/logic/ai/BotBrain.h"
+#include "bomberman/logic/ai/DangerMap.h"
 #include "bomberman/logic/IEntityFactory.h"
 #include "bomberman/logic/grid/TileGrid.h"
 
@@ -85,6 +87,20 @@ namespace bomberman::logic {
 
     private:
         void spawn_characters();
+
+        /// @brief Tells a character to treat bomb cells as walls.
+        void teach_obstacles(const std::shared_ptr<Character>& character) const;
+
+        /**
+         * @brief Lets every living bot decide, and applies what it decided.
+         *
+         * Decisions are not taken every tick: a bot re-decides when it
+         * reaches a new cell, when it is standing somewhere dangerous, or
+         * when its timer runs out. Three breadth-first searches per bot per
+         * frame would be wasted work - the answer cannot change until the
+         * bot has moved or the arena has.
+         */
+        void update_bots(float dt);
         void place_bomb_for(const std::shared_ptr<Character>& character);
 
         /// @brief Turns detonated bombs into fire, recursively via chains.
@@ -108,6 +124,23 @@ namespace bomberman::logic {
         RoundConfig round_;
 
         TileGrid grid_;
+
+        /**
+         * @brief One bot, its brain, and when it last decided.
+         *
+         * The brain is kept beside the character rather than inside it:
+         * a Character is a body, and giving it an opinion would make the
+         * player's character carry an AI it never uses.
+         */
+        struct BotSlot {
+            std::shared_ptr<Character> character;
+            ai::BotBrain brain;
+            TilePos last_cell{-1, -1};
+            float seconds_since_decision = 0.f;
+        };
+
+        ai::DangerMap danger_;
+        std::vector<BotSlot> bots_;
 
         std::shared_ptr<Character> player_;
         std::vector<std::shared_ptr<Character>> characters_;

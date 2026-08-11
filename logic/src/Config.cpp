@@ -80,6 +80,19 @@ namespace bomberman::logic {
         config.round.bot_count =
             sif::io::get_checked<std::size_t>(round, "bot_count", config.round.bot_count);
 
+        if (round.contains("bot_personalities") && !round.at("bot_personalities").is_null()) {
+            if (!round.at("bot_personalities").is_array()) {
+                throw std::runtime_error("config: 'round.bot_personalities' must be an array of strings");
+            }
+            for (const auto& entry : round.at("bot_personalities")) {
+                // personality_from_string names the offending value and the
+                // accepted ones, so a typo is a one-line fix rather than a
+                // hunt through the source.
+                config.round.bot_personalities.push_back(
+                    ai::personality_from_string(entry.get<std::string>()));
+            }
+        }
+
         const nlohmann::json score = section(j, "score");
         config.score.per_second_alive =
             sif::io::get_checked<int>(score, "per_second_alive", config.score.per_second_alive);

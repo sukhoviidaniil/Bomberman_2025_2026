@@ -32,6 +32,7 @@ namespace bomberman::logic {
 
     void World::start_round() {
         characters_.clear();
+        bots_.clear();
         bombs_.clear();
         explosions_.clear();
         power_ups_.clear();
@@ -65,14 +66,26 @@ namespace bomberman::logic {
         player_ = factory_->make_character(
             CharacterKind::Player, grid_.get_center(spawns[0]), size, round_.character_speed);
         characters_.push_back(player_);
+        teach_obstacles(player_);
 
         // A hand-written layout may declare fewer spawns than there are
         // bots; spawning two characters on one cell would kill them both
         // on the first bomb, so the count follows the map.
         const std::size_t bots = spawns.empty() ? 0 : std::min(round_.bot_count, spawns.size() - 1);
         for (std::size_t i = 0; i < bots; ++i) {
-            characters_.push_back(factory_->make_character(
-                CharacterKind::Bot, grid_.get_center(spawns[i + 1]), size, round_.character_speed));
+            std::shared_ptr<Character> bot = factory_->make_character(
+                CharacterKind::Bot, grid_.get_center(spawns[i + 1]), size, round_.character_speed);
+            characters_.push_back(bot);
+            teach_obstacles(bot);
+
+            // Personalities cycle through whatever the configuration
+            // listed, so three bots with two personalities configured get
+            // the first one twice rather than none at all.
+            const ai::BotPersonality personality = round_.bot_personalities.empty()
+                ? ai::BotPersonality::Balanced
+                : round_.bot_personalities[i % round_.bot_personalities.size()];
+
+            bots_.push_back(BotSlot{bot, ai::BotBrain(personality), TilePos{-1, -1}, 0.f});
         }
     }
 
@@ -83,21 +96,11 @@ namespace bomberman::logic {
 
         bus_->emit(game_events::Tick{dt});
 
-        // TODO(daniil): drive the bots here, before they are moved.
-        //  Each of the four behaviours the assignment lists is a query
-        //  the pieces above already answer:
-        //    - "run to safety"        -> PathFinder::find_nearest with a
-        //                                predicate excluding cells inside
-        //                                any bomb's blast radius;
-        //    - "collect power-ups"    -> find_nearest over power_ups_;
-        //    - "open up the playfield"-> find_nearest for a cell adjacent
-        //                                to a Destructible tile, then
-        //                                place_bomb_for();
-        //    - "hunt the others"      -> find_path towards the nearest
-        //                                living character.
-        //  Note that a bot reads its own blast_radius() when deciding how
-        //  far to run, so picking up Fire automatically makes it flee
-        //  further - that is the "bots understand power-ups" requirement.
+        // The danger map is rebuilt once per tick and shared by every bot:
+        // it is the same question for all of them, and deriving blast rays
+        // three times would be three times the work for one answer.
+        danger_.rebuild(grid_, bombs_, explosions_);
+        update_bots(dt);
 
         for (const auto& character : characters_) {
             if (character->alive()) {
@@ -129,6 +132,71 @@ namespace bomberman::logic {
     void World::player_place_bomb() {
         if (player_ != nullptr) {
             place_bomb_for(player_);
+        }
+    }
+
+    void World::teach_obstacles(const std::shared_ptr<Character> &character) const {
+        // A bomb blocks movement, except for the character still standing
+        // on the one they just placed - "After moving out of the bomb, the
+        // player can no longer go through it". The rule lives in the World
+        // because only the World knows where the bombs are; the character
+        // only has to be told how to ask.
+        //
+        // Capturing `this` is safe: the World owns every character and
+        // outlives them all.
+        character->set_obstacle_check([this](const TilePos& cell) { return has_bomb_at(cell); });
+    }
+
+    void World::update_bots(const float dt) {
+        // How often a bot re-decides when nothing else prompts it.
+        constexpr float decision_interval = 0.15f;
+
+        for (BotSlot& slot : bots_) {
+            const std::shared_ptr<Character>& bot = slot.character;
+            if (bot == nullptr || !bot->alive()) {
+                continue;
+            }
+
+            const auto cell = grid_.get_TilePos(bot->position());
+            if (!cell.has_value()) {
+                continue;
+            }
+
+            slot.seconds_since_decision += dt;
+
+            const bool entered_new_cell = *cell != slot.last_cell;
+            const bool in_danger = !danger_.safe(*cell);
+            const bool timer_expired = slot.seconds_since_decision >= decision_interval;
+
+            if (!entered_new_cell && !in_danger && !timer_expired) {
+                continue;
+            }
+
+            slot.last_cell = *cell;
+            slot.seconds_since_decision = 0.f;
+
+            const ai::BotContext ctx{
+                grid_,
+                danger_,
+                *bot,
+                *cell,
+                characters_,
+                power_ups_,
+                [this](const TilePos& c) { return has_bomb_at(c); },
+                round_.bomb_fuse_seconds,
+                // Tiles per second: the bot reasons in cells, the world
+                // moves in world units, and the tile size is the bridge.
+                grid_.tile_size() > 0.f ? bot->speed() / grid_.tile_size() : 0.f
+            };
+
+            const ai::BotAction action = slot.brain.decide(ctx);
+
+            if (action.place_bomb) {
+                place_bomb_for(bot);
+            }
+            if (action.move != Direction::None) {
+                bot->set_direction(action.move);
+            }
         }
     }
 

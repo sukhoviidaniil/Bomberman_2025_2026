@@ -83,4 +83,20 @@ namespace bomberman::logic {
     void Character::forget_leaving() {
         has_pass_cell_ = false;
     }
+
+    void Character::set_obstacle_check(std::function<bool(const TilePos &)> check) {
+        obstacle_check_ = std::move(check);
+    }
+
+    bool Character::can_enter(const TilePos &cell, const TileGrid &grid) const {
+        if (!Actor::can_enter(cell, grid)) {
+            return false;
+        }
+        if (obstacle_check_ && obstacle_check_(cell)) {
+            // The one exception: the bomb this character is currently
+            // standing on, until they have stepped off it.
+            return may_pass(cell);
+        }
+        return true;
+    }
 }

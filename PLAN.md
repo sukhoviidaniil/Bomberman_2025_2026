@@ -49,6 +49,39 @@ listed in `TODO.md`.
 
 ---
 
+## ~~Step 1 — Bot AI~~ — **done**
+
+Implemented in `logic/include/bomberman/logic/ai/` and wired into
+`World::update_bots`:
+
+* `DangerMap` — where the fire will be and in how long, rebuilt once per tick
+  and shared by every bot. Includes both bombs *and* explosions already
+  burning.
+* `BotBehaviour` + five behaviours — one per line of the assignment's AI list,
+  asked in priority order by `BotBrain`.
+* `BotPersonality` (balanced / aggressive / collector) — the same behaviours in
+  a different order, configurable per bot in `assets/config.json`. That is the
+  listed bonus "give each bot their own personality", for no new code.
+* Bombs now block movement, with the "walk off the one you just placed"
+  exception the assignment requires.
+* 26 tests, including two end-to-end guards: no bot dies to its own bomb across
+  six seeds, and the bots measurably open up the arena.
+
+Measured over 20 seeded rounds with an idle player: every round resolves
+(average 60 s), the player loses every time, and no bot kills itself.
+
+Two bugs were found by these tests and by an instrumented run, and both are the
+kind that look like working code:
+
+1. `DangerMap` modelled only bombs. On the tick a bomb was removed its cells
+   read as safe while the fire was still burning there, and all three bots
+   walked into it — every round ended at t = 2.25 s.
+2. The escape *route* was checked for walls but not for fire, so a correctly
+   chosen refuge could be reached by a path that crossed an explosion.
+
+<details>
+<summary>The original plan for this step, kept for the defence</summary>
+
 ## Step 1 — Bot AI  *(the one real gap; 2–3 days)*
 
 Without it there is no game: three motionless bots is not "the Player competes
@@ -96,6 +129,8 @@ than constants — do not hard-code `2`.
 interface (`BotBrain`) and pick between them by priority, rather than one
 `if/else` cascade. Then "give each bot its own personality" (a listed bonus)
 becomes a different priority list, not new code.
+
+</details>
 
 ---
 
@@ -196,8 +231,8 @@ smaller design you own beats a larger one you are quoting.
 
 | Days | Work |
 |---|---|
-| 1–3 | Step 1 (bot AI) — the only blocking gap |
-| 4 | Step 2 (diagrams + report) |
+| ~~1–3~~ | ~~Step 1 (bot AI)~~ — done |
+| 4 | Step 2 (diagrams + report) — `uml/ai.puml` exists; the other three do not |
 | 5–6 | Step 3 (HUD, name entry, polish) |
 | 7 | Step 4 (quality, valgrind, more tests) |
 | 8 | Step 5 (submission mechanics), then Step 6 continuously |

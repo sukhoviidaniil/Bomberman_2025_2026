@@ -258,11 +258,14 @@ SIF_TEST(a_bomb_explodes_after_its_fuse_and_frees_its_slot) {
         f.world.update(1.f / 60.f);
     }
 
-    SIF_CHECK(f.world.bombs().empty());
-    // The slot is free again. Note that can_place_bomb() is still false:
-    // the player was standing on the bomb and died in its blast, which is
-    // correct behaviour and worth asserting rather than working around.
+    // Not "no bombs at all": the bots are playing too and will have
+    // dropped their own by now. What this test is about is the player's
+    // bomb, so it asks about the player's cell and the player's slot.
+    SIF_CHECK(!f.world.has_bomb_at({0, 0}));
     SIF_CHECK(f.world.player()->bombs_placed() == 0);
+    // can_place_bomb() is still false: the player was standing on the bomb
+    // and died in its blast, which is correct behaviour and worth
+    // asserting rather than working around.
     SIF_CHECK(!f.world.player()->alive());
 }
 

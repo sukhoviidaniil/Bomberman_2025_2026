@@ -170,6 +170,22 @@ anyway, so an event per entity per frame would carry no extra information.
 are queued and applied at the end of the frame, so a state can push its successor from inside
 its own `update()` without being destroyed mid-call.
 
+**Bot AI.** A priority chain, not a state machine. The assignment describes the
+AI as a list of conditions — *if a bomb is going to blow them up…*, *if any
+power-ups are in their range…* — which is a priority of goals re-evaluated every
+decision. Each goal is a `BotBehaviour`; `BotBrain` asks them in order and takes
+the first answer. A *personality* is therefore just a different order of the
+middle three (survival is always first, wandering always last), which is the
+listed bonus for no new code — configure it with `round.bot_personalities`.
+
+Everything the behaviours ask is a question about one shared `DangerMap`:
+where the fire will be, and in how long. It is rebuilt once per tick from the
+bombs **and** the explosions already burning, and `with_bomb()` produces the
+hypothetical version that answers the most important question a Bomberman AI
+has: *if I drop a bomb here, can I still get out?* A bot reads its own
+`blast_radius()` and `bomb_budget()` when answering, so picking up Fire
+automatically makes it flee further and take longer shots.
+
 **Collision.** Plain axis-aligned boxes, as the assignment permits. `AABB` stores a centre and
 a *half*-size, and that is the only meaning it has anywhere.
 

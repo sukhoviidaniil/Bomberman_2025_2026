@@ -12,7 +12,7 @@ work has to happen, so CLion's TODO tool window lists them.
 
 | # | What | Where |
 |---|------|-------|
-| 1 | **Bot AI.** All four behaviours the assignment lists are queries the existing pieces already answer — see the block comment in `World::update`. | `logic/src/World.cpp` |
+| ~~1~~ | ~~Bot AI~~ — **done**: `logic/ai/` (DangerMap, BotBehaviour + five behaviours, BotBrain, personalities), driven from `World::update_bots`. 26 tests. | |
 | ~~18~~ | ~~Strip packing belongs in sif~~ — **done**: `sif_sprite_packer` now ships with the engine (`sif/tools/`), is built by CMake and is run by this project's `bomberman_assets` target. The Python script is gone. | |
 | ~~2~~ | ~~Sprites and animations~~ — **done**: walk per direction, idle, death, ticking bomb, growing explosion, tile art. Built by `sif_sprite_packer` from `assets/sprites.pack.json`. | |
 | ~~3~~ | ~~Sound~~ — **done**: `view::AudioDirector` turns gameplay events into sound. Still missing: menu navigation sound and background music. | `view/src/AudioDirector.cpp` |

@@ -11,6 +11,7 @@
 #define BOMBERMAN_LOGIC_CHARACTER_H
 
 #include <cstddef>
+#include <functional>
 
 #include "bomberman/logic/entity/Actor.h"
 #include "bomberman/logic/events/GameEvents.h"
@@ -71,7 +72,21 @@ namespace bomberman::logic {
         [[nodiscard]] bool may_pass(const TilePos& cell) const;
         void forget_leaving();
 
+        /**
+         * @brief Installs the "is this cell blocked by an entity" question.
+         *
+         * Movement needs to know about bombs, and a Character has no view
+         * of the world's entity lists. A predicate supplied by the World
+         * keeps that knowledge where it belongs instead of handing every
+         * character a back-reference to the whole game.
+         */
+        void set_obstacle_check(std::function<bool(const TilePos&)> check);
+
+    protected:
+        [[nodiscard]] bool can_enter(const TilePos& cell, const TileGrid& grid) const override;
+
     private:
+
         CharacterKind kind_;
         bool alive_ = true;
 
@@ -81,6 +96,8 @@ namespace bomberman::logic {
 
         bool has_pass_cell_ = false;
         TilePos pass_cell_{};
+
+        std::function<bool(const TilePos&)> obstacle_check_;
     };
 }
 

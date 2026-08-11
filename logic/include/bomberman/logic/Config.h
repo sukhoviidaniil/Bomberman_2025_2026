@@ -16,6 +16,7 @@
 #include <vector>
 
 #include "bomberman/logic/Score.h"
+#include "bomberman/logic/ai/BotBrain.h"
 
 namespace bomberman::logic {
 
@@ -63,6 +64,16 @@ namespace bomberman::logic {
         float bomb_fuse_seconds = 2.f;
         float explosion_seconds = 0.5f;
         std::size_t bot_count = 3;
+
+        /**
+         * @brief One personality per bot, cycled if there are fewer than bots.
+         *
+         * Empty means "all balanced". A personality is only the order in
+         * which a bot weighs its goals, so this is a genuine gameplay knob
+         * rather than a cosmetic one - three aggressive bots play very
+         * differently from three collectors.
+         */
+        std::vector<ai::BotPersonality> bot_personalities;
     };
 
     /// @brief Window and frame-rate settings, consumed by the view layer.

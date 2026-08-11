@@ -1,0 +1,118 @@
+@startuml bot_ai
+title Bomberman - bot AI
+
+package "bomberman::logic::ai" {
+
+    class DangerMap {
+        +rebuild(grid, bombs, explosions)
+        +with_bomb(grid, cell, radius, fuse) : DangerMap
+        +seconds_until_blast(cell) : float
+        +safe(cell) : bool
+        +safe_for(cell, seconds) : bool
+    }
+
+    struct BotContext {
+        +grid : TileGrid
+        +danger : DangerMap
+        +self : Character
+        +self_cell : TilePos
+        +characters, power_ups
+        +has_bomb(cell) : bool
+        +tiles_per_second : float
+        +passable(cell) : bool
+        +nearest_enemy() : Character
+        +blocks_remain() : bool
+    }
+
+    struct BotAction {
+        +move : Direction
+        +place_bomb : bool
+        +reason : string
+    }
+
+    abstract class BotBehaviour {
+        +{abstract} name() : string
+        +{abstract} decide(ctx) : optional<BotAction>
+    }
+
+    class SurviveBehaviour
+    class CollectPowerUpBehaviour
+    class BreakBlocksBehaviour
+    class HuntBehaviour
+    class WanderBehaviour
+
+    BotBehaviour <|-- SurviveBehaviour
+    BotBehaviour <|-- CollectPowerUpBehaviour
+    BotBehaviour <|-- BreakBlocksBehaviour
+    BotBehaviour <|-- HuntBehaviour
+    BotBehaviour <|-- WanderBehaviour
+
+    class BotBrain {
+        -personality : BotPersonality
+        -behaviours : vector<unique_ptr<BotBehaviour>>
+        +decide(ctx) : BotAction
+        +priorities() : vector<string>
+    }
+
+    enum BotPersonality {
+        Balanced
+        Aggressive
+        Collector
+    }
+
+    class PathFinder <<static>> {
+        +find_path(grid, from, to, passable)
+        +first_step(grid, from, to, passable)
+        +find_nearest(grid, from, passable, goal, max_depth)
+    }
+
+    note as N1
+        Shared helpers (BotBehaviour.h):
+          escape_after_bomb(ctx, from)
+          passable_and_survivable(ctx, from, danger)
+          step_towards(ctx, goal)
+        Both questions every behaviour asks.
+    end note
+}
+
+class World {
+    -danger_ : DangerMap
+    -bots_ : vector<BotSlot>
+    -update_bots(dt)
+}
+
+World *-- BotBrain : one per bot
+World --> DangerMap : rebuilds once per tick
+BotBrain o-- BotBehaviour : ordered by priority
+BotBrain --> BotPersonality
+BotBehaviour ..> BotContext : reads
+BotBehaviour ..> BotAction : produces
+BotBehaviour ..> PathFinder : uses
+BotContext --> DangerMap
+
+note right of BotBrain
+  A priority chain, not a state machine.
+
+  The assignment describes the AI as a list of
+  conditions ("if a bomb is going to blow them
+  up...", "if any power-ups are in range..."),
+  which is a priority of goals evaluated every
+  decision. An FSM would need a transition rule
+  for every pair of goals; the chain reads like
+  the specification.
+
+  A personality is the *order* of the middle
+  three - survival is always first, wandering
+  always last. New behaviour, no new code.
+end note
+
+note bottom of DangerMap
+  Bombs are the future, explosions are the
+  present. Leaving the fire out looks like
+  working code until the tick a bomb is
+  removed - its cells then read as safe while
+  they are still burning, and every bot walks
+  into them.
+end note
+
+@enduml
