@@ -43,6 +43,7 @@ namespace bomberman::view {
             data_dir_.push_back('/');
         }
         score_board_path_ = data_dir_ + "scoreboard.json";
+        profile_path_ = data_dir_ + "player.json";
 
         const sif::ast::RB_Config render_config{
             .type = sif::ast::RB_Type::SFML,
@@ -64,6 +65,7 @@ namespace bomberman::view {
         bootstrap_assets();
 
         score_board_.load(score_board_path_);
+        profile_.load(profile_path_);
 
         track(bus_->subscribe<sif::event::window::Window_Closed>(
             [this](const sif::event::window::Window_Closed&) {
@@ -103,7 +105,16 @@ namespace bomberman::view {
             return;
         }
 
-        if (ev.type() != std::type_index(typeid(sif::event::input::KeyPressed))) {
+        if (ev.type() != std::type_index(typeid(sif::event::input::KeyPressed))
+            && ev.type() != std::type_index(typeid(sif::event::input::TextEntered))) {
+            return;
+        }
+
+        if (ev.type() == std::type_index(typeid(sif::event::input::TextEntered))) {
+            const auto& typed = *static_cast<const sif::event::input::TextEntered*>(ev.data());
+            if (typed.printable()) {
+                states_.on_text(typed.unicode);
+            }
             return;
         }
 
@@ -151,4 +162,16 @@ namespace bomberman::view {
     const GameAssets & Game::assets() const { return *assets_; }
     logic::ScoreBoard & Game::score_board() { return score_board_; }
     const std::string & Game::score_board_path() const { return score_board_path_; }
+
+    logic::PlayerProfile & Game::profile() { return profile_; }
+
+    void Game::save_profile() const { profile_.save(profile_path_); }
+
+    std::string Game::scene_path(const std::string &scene_file) const {
+        return data_dir_ + "bin/scenes/" + scene_file;
+    }
+
+    void Game::click() const {
+        audio_->play(assets_->sound(assets::sfx_menu), 0.8f);
+    }
 }

@@ -16,6 +16,7 @@ namespace bomberman::view {
 
     void State::on_enter(StateManager&) {}
     void State::on_pause() {}
+    void State::on_text(StateManager&, char32_t) {}
     void State::on_resume() {}
     bool State::draws_below() const { return false; }
 
@@ -57,6 +58,13 @@ namespace bomberman::view {
     }
 
     void StateManager::flush() {
+        apply_pending();
+    }
+
+    void StateManager::on_text(const char32_t character) {
+        if (!stack_.empty()) {
+            stack_.back()->on_text(*this, character);
+        }
         apply_pending();
     }
 

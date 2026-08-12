@@ -193,8 +193,18 @@ namespace bomberman::logic::ai {
         }
 
         const int distance = manhattan_distance(from, target);
-        if (distance == 0 || distance > static_cast<int>(radius)) {
+        if (distance > static_cast<int>(radius)) {
             return false;
+        }
+
+        // distance == 0 is the best shot there is: the two are standing on
+        // the same cell, and a bomb placed here cannot miss. Rejecting it
+        // (as this did) meant a bot would chase its target across the arena,
+        // catch it, and then stand next to it forever - the round never
+        // ended, which looked like a stuck simulation rather than like a
+        // one-character mistake in a bounds check.
+        if (distance == 0) {
+            return true;
         }
 
         // The blast has to actually get there: one wall in between and the

@@ -1,0 +1,7 @@
+<VBox padding="10" spacing="4" align="Center" name="root">
+    <Text asset_name="UI" fontSize="26" color="240|240|250" height="PX|32" name="score">SCORE 0</Text>
+    <Text asset_name="UI" fontSize="20" color="160|165|185" height="PX|26" name="stats">
+        FIRE 1    BOMBS 1    SPEED 0%
+    </Text>
+    <Element flex="1" name="spacer"/>
+</VBox>

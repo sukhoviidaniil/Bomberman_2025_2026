@@ -1,0 +1,8 @@
+<VBox padding="40" spacing="16" align="Center" name="root">
+    <Element flex="1" name="spacer_top"/>
+    <Text asset_name="UI" fontSize="52" color="240|240|250" height="PX|68" name="title">PAUSED</Text>
+    <Text asset_name="UI" fontSize="22" color="150|155|175" height="PX|34" name="hint">
+        ESC - resume      S - give up and return to the menu
+    </Text>
+    <Element flex="1" name="spacer_bottom"/>
+</VBox>

@@ -1,0 +1,21 @@
+<VBox padding="40" spacing="10" align="Center" name="root">
+    <Text asset_name="UI" fontSize="56" color="240|240|250" height="PX|70" name="title">BOMBERMAN</Text>
+
+    <Text asset_name="UI" fontSize="24" color="150|155|175" height="PX|40" name="board_title">TOP 5</Text>
+
+    <Text asset_name="UI" fontSize="22" color="220|220|235" height="PX|30" name="score_1">-</Text>
+    <Text asset_name="UI" fontSize="22" color="220|220|235" height="PX|30" name="score_2">-</Text>
+    <Text asset_name="UI" fontSize="22" color="220|220|235" height="PX|30" name="score_3">-</Text>
+    <Text asset_name="UI" fontSize="22" color="220|220|235" height="PX|30" name="score_4">-</Text>
+    <Text asset_name="UI" fontSize="22" color="220|220|235" height="PX|30" name="score_5">-</Text>
+
+    <Element flex="1" name="spacer"/>
+
+    <Text asset_name="UI" fontSize="30" color="240|240|250" height="PX|42" name="item_play">PLAY</Text>
+    <Text asset_name="UI" fontSize="30" color="150|155|175" height="PX|42" name="item_settings">SETTINGS</Text>
+    <Text asset_name="UI" fontSize="30" color="150|155|175" height="PX|42" name="item_quit">QUIT</Text>
+
+    <Text asset_name="UI" fontSize="18" color="120|125|145" height="PX|40" name="hint">
+        UP / DOWN - choose      ENTER - confirm
+    </Text>
+</VBox>

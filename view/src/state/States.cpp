@@ -10,6 +10,7 @@
 
 #include "bomberman/view/state/States.h"
 
+#include <memory>
 #include <utility>
 
 #include "bomberman/view/ArenaView.h"
@@ -17,45 +18,27 @@
 #include "bomberman/view/Game.h"
 
 #include "sif/render/elements/Rectangle.h"
-#include "sif/render/elements/Text.h"
 
 namespace bomberman::view {
     namespace {
-        const sif::intrnl::Color text_color{235, 235, 245};
-        const sif::intrnl::Color dim_color{170, 175, 190};
-        const sif::intrnl::Color overlay_color{10, 12, 18, 190};
+        const sif::intrnl::Color selected_color{250, 220, 120};
+        const sif::intrnl::Color normal_color{150, 155, 175};
+        const sif::intrnl::Color overlay_color{10, 12, 18, 200};
 
-        /// Draws one line of text at a pixel position.
-        void text(sif::rnd::RenderFrame& frame, const DrawContext& ctx,
-                  const std::string& value, const float y, const int size,
-                  const sif::intrnl::Color color) {
-
-            if (!ctx.font.ready()) {
-                return; // the font is still loading; skip the label, not the frame
-            }
-
-            auto item = std::make_unique<sif::rnd::Text>();
-            item->text = value;
-            item->size = size;
-            item->color = color;
-            item->font = ctx.font;
-            // Centred horizontally by eye; a real HUD should be built from
-            // sif::ui elements instead.
-            //
-            // TODO(daniil): replace these hand-placed labels with a
-            //  *.ui.xml scene loaded through sif's layout engine, the way
-            //  the sif demos do. The engine already measures text with the
-            //  real font metrics, so centring becomes exact instead of
-            //  approximate.
-            const float width = ctx.camera.screen_size().x;
-            item->rect = {width * 0.5f - static_cast<float>(value.size()) * static_cast<float>(size) * 0.27f,
-                          y, 0.f, 0.f};
-            frame.temp_items.push_back(std::move(item));
-        }
-
-        void full_screen_overlay(sif::rnd::RenderFrame& frame, const DrawContext& ctx) {
+        /**
+         * @brief Dims whatever is underneath, for the overlay screens.
+         *
+         * Drawn here rather than declared in the scene file because sif's
+         * layout engine stacks children in a line - it has no container
+         * that puts one element *on top of* another.
+         *
+         * TODO(daniil): a <Stack> or absolute-positioned container in sif
+         *  would let the backdrop live in the *.ui.xml with everything
+         *  else, and would also be what a real HUD needs.
+         */
+        void dim_background(sif::rnd::RenderFrame& frame, const sif::rnd::Camera& camera) {
             auto item = std::make_unique<sif::rnd::Rectangle>();
-            item->rect = {0.f, 0.f, ctx.camera.screen_size().x, ctx.camera.screen_size().y};
+            item->rect = {0.f, 0.f, camera.screen_size().x, camera.screen_size().y};
             item->color = overlay_color;
             frame.temp_items.push_back(std::move(item));
         }
@@ -64,61 +47,126 @@ namespace bomberman::view {
     // ===================== MenuState =====================
 
     void MenuState::on_enter(StateManager &manager) {
-        manager_ = &manager;
+        scene_ = UiScene(manager.game().scene_path("menu.ui.xml"));
+        nav_ = MenuNav({"item_play", "item_settings", "item_quit"});
+        needs_refresh_ = true;
+        refresh(manager);
     }
 
     void MenuState::on_resume() {
-        elapsed_ = 0.f;
+        // Coming back from Settings or from a round: the name and the
+        // scoreboard may both have changed underneath.
+        needs_refresh_ = true;
+    }
+
+    void MenuState::refresh(StateManager &manager) {
+        const auto& entries = manager.game().score_board().entries();
+
+        for (std::size_t i = 0; i < logic::ScoreBoard::capacity; ++i) {
+            const std::string slot = "score_" + std::to_string(i + 1);
+            if (i < entries.size()) {
+                scene_.set_text(slot, std::to_string(i + 1) + ".  " + entries[i].name
+                                      + "   " + std::to_string(entries[i].points));
+                scene_.set_color(slot, sif::intrnl::Color(220, 220, 235));
+            } else {
+                scene_.set_text(slot, "-");
+                scene_.set_color(slot, sif::intrnl::Color(90, 95, 110));
+            }
+        }
+
+        nav_.apply(scene_, selected_color, normal_color);
+        needs_refresh_ = false;
     }
 
     void MenuState::update(StateManager &manager, const float dt) {
-        manager_ = &manager;
-        elapsed_ += dt;
+        if (needs_refresh_) {
+            refresh(manager);
+        }
+        scene_.update(dt);
     }
 
     void MenuState::on_key(StateManager &manager, const sif::event::input::Key key) {
+        using Key = sif::event::input::Key;
+
         switch (key) {
-            case sif::event::input::Key::Enter:
-            case sif::event::input::Key::Space:
-                click(manager);
-                manager.push(std::make_unique<LevelState>());
-                break;
-            case sif::event::input::Key::Escape:
-                click(manager);
+            case Key::Up:   case Key::W: nav_.move(-1); needs_refresh_ = true; return;
+            case Key::Down: case Key::S: nav_.move(1);  needs_refresh_ = true; return;
+            default: break;
+        }
+
+        if (key != Key::Enter && key != Key::Space) {
+            if (key == Key::Escape) {
+                manager.game().click();
                 manager.quit();
+            }
+            return;
+        }
+
+        manager.game().click();
+
+        const std::string& item = nav_.current();
+        if (item == "item_play") {
+            manager.push(std::make_unique<LevelState>());
+        } else if (item == "item_settings") {
+            manager.push(std::make_unique<SettingsState>());
+        } else if (item == "item_quit") {
+            manager.quit();
+        }
+    }
+
+    void MenuState::append_render_items(sif::rnd::RenderFrame &frame, const DrawContext &ctx) const {
+        scene_.append_render_items(frame, ctx.camera);
+    }
+
+    // ===================== SettingsState =====================
+
+    void SettingsState::on_enter(StateManager &manager) {
+        scene_ = UiScene(manager.game().scene_path("settings.ui.xml"));
+        refresh(manager);
+    }
+
+    void SettingsState::refresh(StateManager &manager) {
+        const std::string& name = manager.game().profile().name();
+
+        // A trailing caret, so an empty field still shows where typing goes.
+        scene_.set_text("name_field", name + "_");
+    }
+
+    void SettingsState::update(StateManager & /*manager*/, const float dt) {
+        scene_.update(dt);
+    }
+
+    void SettingsState::on_key(StateManager &manager, const sif::event::input::Key key) {
+        using Key = sif::event::input::Key;
+
+        switch (key) {
+            case Key::Backspace:
+                manager.game().profile().backspace();
+                refresh(manager);
                 break;
+
+            case Key::Enter:
+            case Key::Escape:
+                // Written on the way out rather than on every keystroke:
+                // a name is edited character by character, and saving each
+                // one would rewrite the file a dozen times per entry.
+                manager.game().save_profile();
+                manager.game().click();
+                manager.pop();
+                break;
+
             default:
                 break;
         }
     }
 
-    void MenuState::click(StateManager &manager) {
-        // A menu that answers a key press with silence feels broken even
-        // when it is not; sfx_menu was loaded from the first commit and
-        // never played.
-        manager.game().audio().play(
-            manager.game().assets().sound(assets::sfx_menu), 0.8f);
+    void SettingsState::on_text(StateManager &manager, const char32_t character) {
+        manager.game().profile().append(character);
+        refresh(manager);
     }
 
-    void MenuState::append_render_items(sif::rnd::RenderFrame &frame, const DrawContext &ctx) const {
-        text(frame, ctx, "BOMBERMAN", 90.f, 56, text_color);
-        text(frame, ctx, "TOP 5", 200.f, 28, dim_color);
-
-        float y = 250.f;
-        if (manager_ != nullptr) {
-            const auto& entries = manager_->game().score_board().entries();
-            if (entries.empty()) {
-                text(frame, ctx, "no scores yet", y, 22, dim_color);
-            }
-            for (std::size_t i = 0; i < entries.size(); ++i) {
-                text(frame, ctx,
-                     std::to_string(i + 1) + ".  " + entries[i].name + "   " + std::to_string(entries[i].points),
-                     y, 24, text_color);
-                y += 40.f;
-            }
-        }
-
-        text(frame, ctx, "ENTER - play      ESC - quit", 600.f, 24, dim_color);
+    void SettingsState::append_render_items(sif::rnd::RenderFrame &frame, const DrawContext &ctx) const {
+        scene_.append_render_items(frame, ctx.camera);
     }
 
     // ===================== LevelState =====================
@@ -127,10 +175,12 @@ namespace bomberman::view {
         const logic::GameConfig& config = manager.game().config();
 
         assets_ = &manager.game().assets();
+        hud_ = UiScene(manager.game().scene_path("hud.ui.xml"));
+
         world_bus_ = std::make_shared<sif::event::Event_Bus>();
 
-        // Order matters: both observers subscribe before the World can
-        // emit anything, so no event of the first frame is missed.
+        // Order matters: both observers subscribe before the World can emit
+        // anything, so no event of the first frame is missed.
         score_ = std::make_unique<logic::Score>(world_bus_, config.score);
         audio_ = std::make_unique<AudioDirector>(
             world_bus_, manager.game().audio(), manager.game().assets(), config.audio);
@@ -148,10 +198,29 @@ namespace bomberman::view {
 
         world_->update(dt);
         views_.update(dt);
+        hud_.update(dt);
+
+        if (score_ != nullptr) {
+            hud_.set_text("score", "SCORE " + std::to_string(score_->points()));
+        }
+
+        if (const auto& player = world_->player(); player != nullptr) {
+            const logic::PowerUpRules& rules = player->power_up_rules();
+            const int speed_percent = rules.max_speed > 0.f
+                ? static_cast<int>(player->speed() / rules.max_speed * 100.f)
+                : 0;
+
+            // The three stats the power-ups exist to change; without them a
+            // pick-up has no visible effect at all.
+            hud_.set_text("stats",
+                          "FIRE " + std::to_string(player->blast_radius())
+                          + "    BOMBS " + std::to_string(player->bomb_budget())
+                          + "    SPEED " + std::to_string(speed_percent) + "%");
+        }
 
         if (world_->round_over() && !handed_over_) {
             handed_over_ = true;
-            manager.push(std::make_unique<GameOverState>(world_->player_won(), score_->points()));
+            manager.push(std::make_unique<SaveScoreState>(world_->player_won(), score_->points()));
         }
     }
 
@@ -179,34 +248,21 @@ namespace bomberman::view {
 
         ArenaView::append_render_items(world_->grid(), *assets_, frame, ctx.camera);
         views_.append_render_items(frame, ctx.camera);
-
-        if (score_ != nullptr) {
-            text(frame, ctx, "SCORE  " + std::to_string(score_->points()), 16.f, 24, text_color);
-        }
-
-        // The three stats the power-ups exist to change. Without them a
-        // player has no way to tell that a pick-up did anything, which
-        // makes the whole mechanic invisible.
-        if (const auto& player = world_->player(); player != nullptr) {
-            const float speed_percent = player->power_up_rules().max_speed > 0.f
-                ? player->speed() / player->power_up_rules().max_speed * 100.f
-                : 0.f;
-
-            text(frame, ctx,
-                 "FIRE " + std::to_string(player->blast_radius())
-                 + "    BOMBS " + std::to_string(player->bomb_budget())
-                 + "    SPEED " + std::to_string(static_cast<int>(speed_percent)) + "%",
-                 46.f, 20, dim_color);
-        }
+        hud_.append_render_items(frame, ctx.camera);
     }
 
     const logic::Score * LevelState::score() const { return score_.get(); }
 
     // ===================== PausedState =====================
 
-    void PausedState::update(StateManager & /*manager*/, float /*dt*/) {
-        // Deliberately empty: the level below is not updated while this
-        // state is on top, which is what "paused" means.
+    void PausedState::on_enter(StateManager &manager) {
+        scene_ = UiScene(manager.game().scene_path("pause.ui.xml"));
+    }
+
+    void PausedState::update(StateManager & /*manager*/, const float dt) {
+        // Only the overlay animates: the level below is not updated while
+        // this state is on top, which is what "paused" means.
+        scene_.update(dt);
     }
 
     void PausedState::on_key(StateManager &manager, const sif::event::input::Key key) {
@@ -214,11 +270,12 @@ namespace bomberman::view {
         switch (key) {
             case Key::Escape:
             case Key::Enter:
+                manager.game().click();
                 manager.pop(); // back into the level, exactly where it stopped
                 break;
             case Key::S:
-                // Give up: drop the level too, leaving the menu at depth 1.
-                manager.pop_to_depth(1);
+                manager.game().click();
+                manager.pop_to_depth(1); // give up: the menu is at depth 1
                 break;
             default:
                 break;
@@ -226,48 +283,104 @@ namespace bomberman::view {
     }
 
     void PausedState::append_render_items(sif::rnd::RenderFrame &frame, const DrawContext &ctx) const {
-        full_screen_overlay(frame, ctx);
-        text(frame, ctx, "PAUSED", 280.f, 48, text_color);
-        text(frame, ctx, "ESC - resume      S - back to menu", 380.f, 24, dim_color);
+        dim_background(frame, ctx.camera);
+        scene_.append_render_items(frame, ctx.camera);
     }
 
     bool PausedState::draws_below() const { return true; }
 
-    // ===================== GameOverState =====================
+    // ===================== SaveScoreState =====================
 
-    GameOverState::GameOverState(const bool player_won, const int points)
+    SaveScoreState::SaveScoreState(const bool player_won, const int points)
         : player_won_(player_won), points_(points) {
     }
 
-    void GameOverState::on_enter(StateManager &manager) {
-        if (recorded_) {
-            return;
+    void SaveScoreState::on_enter(StateManager &manager) {
+        scene_ = UiScene(manager.game().scene_path("save_score.ui.xml"));
+        nav_ = MenuNav({"item_save", "item_rename", "item_discard"});
+        needs_refresh_ = true;
+        refresh(manager);
+    }
+
+    void SaveScoreState::on_resume() {
+        // Back from Settings: the name on the screen is stale.
+        needs_refresh_ = true;
+    }
+
+    void SaveScoreState::refresh(StateManager &manager) {
+        scene_.set_text("result", player_won_ ? "YOU WIN" : "GAME OVER");
+        scene_.set_text("score", "score " + std::to_string(points_));
+        scene_.set_text("name_line", "saving as: " + manager.game().profile().name());
+
+        const bool qualifies = manager.game().score_board().qualifies(points_);
+        scene_.set_text("board_note", qualifies
+            ? "this would make the top five"
+            : "this is not enough for the top five");
+        scene_.set_color("board_note", qualifies
+            ? sif::intrnl::Color(120, 220, 150)
+            : sif::intrnl::Color(150, 155, 175));
+
+        nav_.apply(scene_, selected_color, normal_color);
+        needs_refresh_ = false;
+    }
+
+    void SaveScoreState::update(StateManager &manager, const float dt) {
+        if (needs_refresh_) {
+            refresh(manager);
         }
-        recorded_ = true;
+        scene_.update(dt);
+    }
+
+    void SaveScoreState::save(StateManager &manager) {
+        if (saved_) {
+            return; // pressing Enter twice must not add two entries
+        }
+        saved_ = true;
 
         logic::ScoreBoard& board = manager.game().score_board();
-        if (board.submit({"player", points_})) {
-            // TODO(daniil): ask for a name instead of hard-coding
-            //  "player" - the board already stores one per entry.
-            board.save(manager.game().score_board_path());
+        board.submit({manager.game().profile().name(), points_});
+        board.save(manager.game().score_board_path());
+    }
+
+    void SaveScoreState::on_key(StateManager &manager, const sif::event::input::Key key) {
+        using Key = sif::event::input::Key;
+
+        switch (key) {
+            case Key::Up:   case Key::W: nav_.move(-1); needs_refresh_ = true; return;
+            case Key::Down: case Key::S: nav_.move(1);  needs_refresh_ = true; return;
+            default: break;
+        }
+
+        if (key == Key::Escape) {
+            // Escape discards: the safe reading of "I did not choose".
+            manager.game().click();
+            manager.pop_to_depth(1);
+            return;
+        }
+
+        if (key != Key::Enter && key != Key::Space) {
+            return;
+        }
+
+        manager.game().click();
+
+        const std::string& item = nav_.current();
+        if (item == "item_save") {
+            save(manager);
+            manager.pop_to_depth(1);
+        } else if (item == "item_rename") {
+            // Pushed, not replaced: Settings pops itself and this screen
+            // comes back with the new name already in it.
+            manager.push(std::make_unique<SettingsState>());
+        } else if (item == "item_discard") {
+            manager.pop_to_depth(1);
         }
     }
 
-    void GameOverState::update(StateManager & /*manager*/, float /*dt*/) {
+    void SaveScoreState::append_render_items(sif::rnd::RenderFrame &frame, const DrawContext &ctx) const {
+        dim_background(frame, ctx.camera);
+        scene_.append_render_items(frame, ctx.camera);
     }
 
-    void GameOverState::on_key(StateManager &manager, const sif::event::input::Key key) {
-        if (key == sif::event::input::Key::Enter || key == sif::event::input::Key::Escape) {
-            manager.pop_to_depth(1); // back to the menu that was never destroyed
-        }
-    }
-
-    void GameOverState::append_render_items(sif::rnd::RenderFrame &frame, const DrawContext &ctx) const {
-        full_screen_overlay(frame, ctx);
-        text(frame, ctx, player_won_ ? "YOU WIN" : "GAME OVER", 260.f, 52, text_color);
-        text(frame, ctx, "score  " + std::to_string(points_), 350.f, 30, text_color);
-        text(frame, ctx, "ENTER - back to menu", 430.f, 24, dim_color);
-    }
-
-    bool GameOverState::draws_below() const { return true; }
+    bool SaveScoreState::draws_below() const { return true; }
 }

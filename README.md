@@ -72,6 +72,13 @@ Working on the engine at the same time:
 cmake -S . -B build -DSIF_SOURCE_DIR=/path/to/sif
 ```
 
+Source files are **listed** in the `CMakeLists.txt` files rather than globbed.
+A glob is evaluated at configure time, so adding a file leaves an existing build
+directory unaware of it until CMake happens to re-run — and the failure that
+follows is a pile of undefined references in an unrelated target, pointing
+nowhere near the cause. If a build ever does look stale, reconfigure from
+scratch (CLion: *Reset Cache and Reload Project*).
+
 Warnings are on everywhere (`-Wall -Wextra -Wpedantic -Wshadow -Wconversion -Wsign-conversion`)
 and this project's own code produces none. One warning does repeat once per translation unit —
 `sif::math::Point2::Point2()` is declared `constexpr` in a header but defined in a `.cpp`, so no
@@ -136,9 +143,31 @@ rather than *"this exact run crashed"*.
 |-----|--------|
 | Arrows / WASD | Move |
 | Space | Place a bomb |
-| Esc | Pause (in a level) / quit (in the menu) |
-| Enter | Play, resume, confirm |
+| Up / Down | Move through a menu |
+| Enter | Confirm |
+| Esc | Pause (in a level), back (in settings), discard (on the save screen), quit (in the menu) |
 | S (while paused) | Give up and return to the menu |
+
+## Screens
+
+```
+Menu ──PLAY──────► Level ──round ends──► Save score ──SAVE / DISCARD──► Menu
+  │                  │                        │
+  │                  └──Esc──► Paused         └──CHANGE NAME──► Settings ──► back
+  └──SETTINGS──► Settings ──► back
+```
+
+Every screen is a `*.ui.xml` file in `assets/scenes/`, loaded through sif's
+layout engine. Settings is reachable from two places and simply pops itself when
+done, so whoever pushed it comes back with the new name already applied — that
+is the whole reason the state machine is a stack rather than a set of
+transitions.
+
+The score is **not** recorded automatically. A player who had a bad round should
+not have to delete it afterwards, and one who mistyped their name should be able
+to fix it before it is written rather than after, so the save screen offers
+*save*, *change name* and *discard*, and tells you in advance whether the score
+would make the top five.
 
 ---
 
@@ -170,6 +199,15 @@ anyway, so an event per entity per frame would carry no extra information.
 are queued and applied at the end of the frame, so a state can push its successor from inside
 its own `update()` without being destroyed mid-call.
 
+**UI from data.** Every screen is a `*.ui.xml` scene measured and laid out by
+sif's layout engine, not a list of hand-tuned pixel offsets. Labels used to be
+placed with an approximate centring formula, which meant every layout change was
+a rebuild and every label was centred by eye; the engine measures text with the
+real font metrics, so the same scene is correct at any window size. Scenes are
+authored with `asset_name="UI"` and rewritten to numeric GUIDs by
+`Asset_Reference_Serialization` at build time, so renaming an asset fails the
+build instead of silently breaking a screen.
+
 **Bot AI.** A priority chain, not a state machine. The assignment describes the
 AI as a list of conditions — *if a bomb is going to blow them up…*, *if any
 power-ups are in their range…* — which is a priority of goals re-evaluated every
@@ -185,6 +223,22 @@ hypothetical version that answers the most important question a Bomberman AI
 has: *if I drop a bomb here, can I still get out?* A bot reads its own
 `blast_radius()` and `bomb_budget()` when answering, so picking up Fire
 automatically makes it flee further and take longer shots.
+
+**Power-ups.** Destroying a block rolls `power_ups.drop_chance`; if it hits, the
+kind is drawn from three weights, so setting one to `0` removes that power-up
+from the game without touching code. Every effect is permanent and capped
+(`max_blast_radius`, `max_bomb_budget`, `max_speed`) — an uncapped blast
+eventually covers the arena and an uncapped speed outruns the grid snapping.
+
+A pick-up is revealed *by* a blast, in the cell that blast is burning, so it
+carries a shield for exactly the explosion's lifetime: it appears once the fire
+clears. Without it every pick-up was destroyed on the frame it was created, and
+none ever reached a player — a bug a test found rather than an eye.
+
+Bots need no special case to "understand" power-ups: `CollectPowerUpBehaviour`
+walks to nearby ones, and every other behaviour reads the character's own
+`blast_radius()`, `bomb_budget()` and speed, so a bot that picks up Fire starts
+fleeing further and taking longer shots by itself.
 
 **Collision.** Plain axis-aligned boxes, as the assignment permits. `AABB` stores a centre and
 a *half*-size, and that is the only meaning it has anywhere.

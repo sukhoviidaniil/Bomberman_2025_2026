@@ -1,0 +1,19 @@
+<VBox padding="40" spacing="14" align="Center" name="root">
+    <Text asset_name="UI" fontSize="44" color="240|240|250" height="PX|60" name="title">SETTINGS</Text>
+
+    <Element flex="1" name="spacer_top"/>
+
+    <Text asset_name="UI" fontSize="22" color="150|155|175" height="PX|32" name="name_label">
+        YOUR NAME (used on the scoreboard)
+    </Text>
+    <Text asset_name="UI" fontSize="38" color="120|220|150" height="PX|52" name="name_field">player</Text>
+    <Text asset_name="UI" fontSize="18" color="120|125|145" height="PX|28" name="name_hint">
+        type to edit      BACKSPACE - erase
+    </Text>
+
+    <Element flex="1" name="spacer_bottom"/>
+
+    <Text asset_name="UI" fontSize="20" color="120|125|145" height="PX|34" name="hint">
+        ENTER or ESC - save and go back
+    </Text>
+</VBox>

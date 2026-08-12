@@ -75,6 +75,15 @@ namespace bomberman::view {
 
         virtual void on_key(StateManager& manager, sif::event::input::Key key) = 0;
 
+        /**
+         * @brief A character the user typed.
+         *
+         * Separate from on_key because a key is a position on the keyboard
+         * and a character is what the layout produced from it; only the
+         * screens that accept text care, so the default does nothing.
+         */
+        virtual void on_text(StateManager& manager, char32_t character);
+
         virtual void append_render_items(sif::rnd::RenderFrame& frame,
                                          const DrawContext& ctx) const = 0;
 

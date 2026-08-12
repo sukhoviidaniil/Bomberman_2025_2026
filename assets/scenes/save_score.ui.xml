@@ -1,0 +1,22 @@
+<VBox padding="40" spacing="12" align="Center" name="root">
+    <Element flex="1" name="spacer_top"/>
+
+    <Text asset_name="UI" fontSize="52" color="240|240|250" height="PX|68" name="result">GAME OVER</Text>
+    <Text asset_name="UI" fontSize="32" color="220|220|235" height="PX|46" name="score">score 0</Text>
+    <Text asset_name="UI" fontSize="22" color="150|155|175" height="PX|34" name="board_note">
+        this would make the top five
+    </Text>
+    <Text asset_name="UI" fontSize="24" color="120|220|150" height="PX|36" name="name_line">saving as: player</Text>
+
+    <Element flex="1" name="spacer_middle"/>
+
+    <Text asset_name="UI" fontSize="30" color="240|240|250" height="PX|42" name="item_save">SAVE SCORE</Text>
+    <Text asset_name="UI" fontSize="30" color="150|155|175" height="PX|42" name="item_rename">CHANGE NAME</Text>
+    <Text asset_name="UI" fontSize="30" color="150|155|175" height="PX|42" name="item_discard">DISCARD</Text>
+
+    <Text asset_name="UI" fontSize="18" color="120|125|145" height="PX|40" name="hint">
+        UP / DOWN - choose      ENTER - confirm
+    </Text>
+
+    <Element flex="1" name="spacer_bottom"/>
+</VBox>

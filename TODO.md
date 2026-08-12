@@ -16,8 +16,9 @@ work has to happen, so CLion's TODO tool window lists them.
 | ~~18~~ | ~~Strip packing belongs in sif~~ — **done**: `sif_sprite_packer` now ships with the engine (`sif/tools/`), is built by CMake and is run by this project's `bomberman_assets` target. The Python script is gone. | |
 | ~~2~~ | ~~Sprites and animations~~ — **done**: walk per direction, idle, death, ticking bomb, growing explosion, tile art. Built by `sif_sprite_packer` from `assets/sprites.pack.json`. | |
 | ~~3~~ | ~~Sound~~ — **done**: `view::AudioDirector` turns gameplay events into sound. Still missing: menu navigation sound and background music. | `view/src/AudioDirector.cpp` |
-| 4 | **HUD as a real UI tree.** The labels are placed by hand with an approximate centring formula. Replace them with a `*.ui.xml` scene through sif's layout engine, which measures text with the real font metrics. | `view/src/state/States.cpp` |
-| 5 | **Player name entry** on the game-over screen. `ScoreBoard` already stores a name per entry; it is hard-coded to `"player"`. | `view/src/state/States.cpp` |
+| ~~4~~ | ~~HUD as a real UI tree~~ — **done**: all five screens are `*.ui.xml` scenes under `assets/scenes/`, serialized at build time. | |
+| 4b | **A `<Stack>` container in sif.** The overlay backdrop is still drawn from C++ because the layout engine stacks children in a line and has nothing that puts one element on top of another. | Still hand-placed labels with an approximate centring formula, though they now show score, blast radius, bomb budget and speed. Replace them with a `*.ui.xml` scene through sif's layout engine, which measures text with the real font metrics. | `view/src/state/States.cpp` |
+| ~~5~~ | ~~Player name entry~~ — **done**: `SettingsState` plus `logic::PlayerProfile`, persisted to `assets/player.json`. Reachable from the menu and from the save screen. | |
 | 6 | **Tuning values into JSON.** `WorldConfig`, `ScoreRules` and the constants in `Character.cpp` are struct literals. sif's asset pipeline reads arbitrary JSON already. | `logic/include/bomberman/logic/World.h`, `logic/src/entity/Character.cpp` |
 | 7 | **Static tiles in `constant_items`.** The arena is rebuilt every frame although it only changes when a block is destroyed. `sif::rnd::FrameContext` carries a `redrawing` flag that nothing reads yet. | `view/src/ArenaView.cpp` |
 
@@ -34,7 +35,7 @@ work has to happen, so CLion's TODO tool window lists them.
 | 17 | **Upstream:** sif's `app/CMakeLists.txt` links SFML into the demo executable only. Any consumer that compiles `app/sfml/*.cpp` itself (as this project does) has to link the SFML targets into *that* library, or it compiles against whatever `<SFML/...>` happens to be on the default include path. A `sif_sfml` target with `target_link_libraries(... PUBLIC sfml-graphics ...)` would make this impossible to get wrong. | upstream `sif/app/CMakeLists.txt` |
 | 16 | **Upstream:** sif's own `app/CMakeLists.txt` uses `find_package(SFML 2.6 ...)`, which accepts SFML 3 and then fails to compile. It should select 2.x deliberately, the way `cmake/GetSFML.cmake` here does — or the backend should be ported to SFML 3. | upstream `sif/app/CMakeLists.txt` |
 | 15 | **Upstream fix:** `sif::math::Point2` declares its default constructor `constexpr` but defines it in `Point2.cpp`. A `constexpr` function must be defined in every translation unit that uses it, so every consumer gets a "used but never defined" warning and cannot use `Point2{}` in a constant expression. `AABB` works around it by initialising the members explicitly. | upstream `sif/include/sif/math/Point2.h` |
-| 14 | **Report and class diagrams.** The retake grades "the diagrams of your class structure" as part of code quality. sif's `uml/` shows the format. | new `uml/`, `report/` |
+| 14 | **Report** (diagrams done: `uml/logic.puml`, `uml/view.puml`, `uml/ai.puml`, `uml/patterns.puml`). The retake grades "the diagrams of your class structure" as part of code quality. sif's `uml/` shows the format. | new `uml/`, `report/` |
 
 ## 3. Defence preparation
 

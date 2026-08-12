@@ -25,8 +25,21 @@ if(TARGET sif_sprite_packer)
             OUTPUT "${BOMBERMAN_REGISTRY}"
             COMMAND sif_sprite_packer "${BOMBERMAN_ASSET_DIR}/" "${BOMBERMAN_SPRITE_PACK}"
             COMMAND Asset_GUID_Assignment "${BOMBERMAN_ASSET_DIR}/" "${BOMBERMAN_REGISTRY}"
-            DEPENDS sif_sprite_packer Asset_GUID_Assignment "${BOMBERMAN_SPRITE_PACK}"
-            COMMENT "Packing sprite strips and generating the asset registry"
+            # Scenes are authored with asset_name="UI" and rewritten to the
+            # numeric GUID here, so renaming an asset cannot silently break
+            # a screen - the serializer fails instead.
+            COMMAND Asset_Reference_Serialization
+                    "${BOMBERMAN_REGISTRY}"
+                    "${BOMBERMAN_ASSET_DIR}/scenes"
+                    "${BOMBERMAN_ASSET_DIR}/bin/scenes"
+            DEPENDS sif_sprite_packer Asset_GUID_Assignment Asset_Reference_Serialization
+                    "${BOMBERMAN_SPRITE_PACK}"
+                    "${BOMBERMAN_ASSET_DIR}/scenes/menu.ui.xml"
+                    "${BOMBERMAN_ASSET_DIR}/scenes/settings.ui.xml"
+                    "${BOMBERMAN_ASSET_DIR}/scenes/hud.ui.xml"
+                    "${BOMBERMAN_ASSET_DIR}/scenes/pause.ui.xml"
+                    "${BOMBERMAN_ASSET_DIR}/scenes/save_score.ui.xml"
+            COMMENT "Packing sprites, generating the asset registry and serializing the UI scenes"
             VERBATIM
     )
 else()

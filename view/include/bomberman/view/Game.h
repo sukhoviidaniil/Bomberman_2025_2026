@@ -14,6 +14,7 @@
 #include <string>
 
 #include "bomberman/logic/Config.h"
+#include "bomberman/logic/PlayerProfile.h"
 #include "bomberman/logic/ScoreBoard.h"
 #include "bomberman/view/GameAssets.h"
 #include "bomberman/view/state/StateManager.h"
@@ -72,6 +73,18 @@ namespace bomberman::view {
         [[nodiscard]] logic::ScoreBoard& score_board();
         [[nodiscard]] const std::string& score_board_path() const;
 
+        /// @brief The player's name, edited by SettingsState.
+        [[nodiscard]] logic::PlayerProfile& profile();
+
+        /// @brief Writes the profile to disk; called when Settings is left.
+        void save_profile() const;
+
+        /// @brief Full path of a serialized scene inside <data>/bin/scenes/.
+        [[nodiscard]] std::string scene_path(const std::string& scene_file) const;
+
+        /// @brief The menu blip. A key press that answers with silence feels broken.
+        void click() const;
+
     private:
         void bootstrap_assets();
         void handle_event(const sif::event::EventConcept& ev);
@@ -92,6 +105,8 @@ namespace bomberman::view {
         std::unique_ptr<GameAssets> assets_;
 
         logic::ScoreBoard score_board_;
+        logic::PlayerProfile profile_;
+        std::string profile_path_;
         StateManager states_;
 
         bool window_open_ = true;

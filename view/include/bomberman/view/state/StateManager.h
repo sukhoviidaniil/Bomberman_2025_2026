@@ -64,6 +64,8 @@ namespace bomberman::view {
 
         void on_key(sif::event::input::Key key);
 
+        void on_text(char32_t character);
+
         /**
          * @brief Applies queued transitions immediately.
          *
