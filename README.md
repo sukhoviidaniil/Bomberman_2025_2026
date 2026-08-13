@@ -298,6 +298,33 @@ Asset_GUID_Assignment assets/ assets/bin/registry.rgst.json
 
 ---
 
+## Asset lifetimes
+
+`sif::asset::AssetHandle` offers two accessors and the difference matters:
+`get()` returns a non-owning pointer that is only valid for the expression that
+produced it, while `lock()` returns an owning `shared_ptr`. Anything that keeps
+the pointer beyond one statement — the renderer while it draws, a voice while it
+plays, a view reading frame rectangles — uses `lock()`.
+
+## Asset loading and threads
+
+Loads run on a small pool of background threads by default, but a loader can
+declare `runs_on_main_thread()`; those are queued and executed by
+`AssetRegistry::pump()`, which the frame loop calls once per frame.
+
+Every loader in the SFML backend does so, and not as a precaution.
+`sf::Texture` and `sf::Font` need an OpenGL context and take SFML's
+`TransientContextLock`, which races with the main thread's rendering;
+`sf::SoundBuffer` goes through OpenAL, which races with its own mixer thread.
+ThreadSanitizer catches both inside the libraries. What a player sees is heap
+corruption — *double free or corruption*, *malloc(): unaligned tcache chunk
+detected*, or a segfault whose stack has nothing to do with assets — and
+pressing a key during start-up is enough to trigger it, because that plays a
+sound while the rest of the assets are still decoding.
+
+The headless backend keeps the parallelism: `sf::Image` and
+`sf::InputSoundFile` are pure CPU decoding and open no device.
+
 ## Tests
 
 ```bash

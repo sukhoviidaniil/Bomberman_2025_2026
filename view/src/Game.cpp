@@ -130,6 +130,12 @@ namespace bomberman::view {
         while (window_open_ && states_.running()) {
             const float dt = sif::intrnl::Delta_Timer::instance().tick();
 
+            // Runs the loads that must not happen on a worker thread -
+            // sounds, because OpenAL races with its own mixer thread when
+            // a buffer is created from anywhere else. Cheap when there is
+            // nothing queued, which is every frame after start-up.
+            sif::asset::AssetRegistry::instance().pump();
+
             states_.update(dt);
 
             sif::rnd::RenderFrame frame;

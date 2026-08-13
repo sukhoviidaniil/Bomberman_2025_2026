@@ -110,7 +110,7 @@ namespace bomberman::view {
             return;
         }
 
-        const sif::asset::PrimitiveAnimation* asset = animation_.get();
+        const std::shared_ptr<sif::asset::PrimitiveAnimation> asset = animation_.lock();
         if (asset == nullptr || asset->frame_count() == 0) {
             return;
         }

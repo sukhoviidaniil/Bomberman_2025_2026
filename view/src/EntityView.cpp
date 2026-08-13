@@ -39,7 +39,10 @@ namespace bomberman::view {
             return;
         }
 
-        const sif::asset::PrimitiveAnimation* asset = animation.get();
+        // lock(), not get(): the frame rectangle is read out of the asset
+        // here, and a raw pointer from get() is only guaranteed for the
+        // expression that produced it.
+        const std::shared_ptr<sif::asset::PrimitiveAnimation> asset = animation.lock();
         if (asset == nullptr || asset->frame_count() == 0) {
             return;
         }
