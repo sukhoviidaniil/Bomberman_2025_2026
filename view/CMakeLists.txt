@@ -22,9 +22,29 @@
 # see cmake/GetSFML.cmake's own header for the reasoning.
 include("${CMAKE_SOURCE_DIR}/cmake/GetSFML.cmake")
 
-file(GLOB_RECURSE BOMBERMAN_VIEW_SRC "src/*.cpp")
-
-add_library(bomberman_view STATIC ${BOMBERMAN_VIEW_SRC})
+# Sources are listed, not globbed.
+#
+# A glob is evaluated at *configure* time, so adding a file leaves an
+# existing build directory unaware of it until CMake happens to
+# re-run - and the failure that follows is a pile of undefined
+# references in an unrelated target (the linker step), which points
+# nowhere near the actual cause (a source file that was never compiled
+# in the first place). This has already happened once during
+# development; converting every GLOB in this project to an explicit
+# list is what fixed it, so if this reverts again, it is a real
+# regression, not a style preference.
+add_library(bomberman_view STATIC
+        src/ArenaView.cpp
+        src/AudioDirector.cpp
+        src/EntityView.cpp
+        src/EntityViews.cpp
+        src/Game.cpp
+        src/GameAssets.cpp
+        src/SFMLEntityFactory.cpp
+        src/UiScene.cpp
+        src/state/StateManager.cpp
+        src/state/States.cpp
+)
 
 target_include_directories(bomberman_view PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(bomberman_view

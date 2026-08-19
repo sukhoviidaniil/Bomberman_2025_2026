@@ -45,6 +45,20 @@ in — see below.
 
 Verified on the reference platform: **Ubuntu 24.04, GCC 13, SFML 2.6.1**.
 
+### Building just the logic library
+
+```bash
+cmake -S . -B build -DBOMBERMAN_BUILD_VIEW=OFF
+cmake --build build --target bomberman_tests
+```
+
+With `BOMBERMAN_BUILD_VIEW=OFF`, CMake never processes `view/` or `app/` at all — not just
+"does not build" them, does not *configure* them — so `sif_sfml` is never requested and sif
+never goes looking for (or fetching) SFML. This is what actually demonstrates the
+assignment's core structural requirement, "you should be able to compile this logic library
+without having SFML installed": CI's `logic` job runs exactly this, on a machine with no
+SFML anywhere. `BOMBERMAN_BUILD_VIEW` defaults `ON`.
+
 ### Two independent SFML searches, on purpose
 
 This project's actual gameplay code (`logic/`, `view/`) never includes an `<SFML/...>`

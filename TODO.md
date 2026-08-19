@@ -1,61 +1,141 @@
-# TODO and migration notes
+# TODO
 
-> The ordered, dated version of this list is **[PLAN.md](PLAN.md)** — read that
-> first. This file is the raw inventory.
+**Legend** — every item has exactly one status, at the start of the line:
 
-Every item below also exists as a `TODO(daniil)` comment at the place in the code where the
-work has to happen, so CLion's TODO tool window lists them.
+- ✅ **DONE** — verified working (built, tested, or both — stated per item). Nothing to do.
+- 🔲 **OPEN** — genuinely not done. Actionable, with a concrete next step.
+- 🟡 **BLOCKED** — cannot be finished without a decision or action only *you* can make
+  (an external account, a judgement call, something outside this repository).
+- ❌ **NOT POSSIBLE AS WRITTEN** — an earlier version of this list described something that
+  turned out to be false, unactionable, or already contradicted by the code. Kept here,
+  struck through, so it stops getting re-read as a live task.
 
----
+Each item also exists as a `TODO(daniil)` comment at the point in the code it refers to
+(search for that string), for the six items small enough to leave in place rather than
+describe here.
 
-## 1. Gameplay still to implement
-
-| # | What | Where |
-|---|------|-------|
-| ~~1~~ | ~~Bot AI~~ — **done**: `logic/ai/` (DangerMap, BotBehaviour + five behaviours, BotBrain, personalities), driven from `World::update_bots`. 26 tests. | |
-| ~~21~~ | ~~SFML asset loaders ran on worker threads~~ — **fixed upstream**: OpenGL and OpenAL both race when touched from a background thread while the main thread renders or plays. `IAssetLoader::runs_on_main_thread()` + `AssetRegistry::pump()` route those loads to the frame loop. | |
-| ~~19~~ | ~~`AssetDataNode` had no virtual destructor~~ — **fixed upstream**: every parsed node is owned as `unique_ptr<AssetDataNode>` while holding a derived object, so deleting one was undefined behaviour. AddressSanitizer caught the asset tool freeing 200 of 232 bytes; the corrupted allocator then crashed something unrelated later. | |
-| ~~20~~ | ~~`AssetHandle::get()` returned a pointer into a temporary~~ — **fixed upstream**: added `lock()`, which returns an owning `shared_ptr`, and every site that keeps the pointer beyond one expression (renderer, audio player, entity views) now uses it. | |
-| ~~18~~ | ~~Strip packing belongs in sif~~ — **done**: `sif_sprite_packer` now ships with the engine (`sif/tools/`), is built by CMake and is run by this project's `bomberman_assets` target. The Python script is gone. | |
-| ~~2~~ | ~~Sprites and animations~~ — **done**: walk per direction, idle, death, ticking bomb, growing explosion, tile art. Built by `sif_sprite_packer` from `assets/sprites.pack.json`. | |
-| ~~3~~ | ~~Sound~~ — **done**: `view::AudioDirector` turns gameplay events into sound. Still missing: menu navigation sound and background music. | `view/src/AudioDirector.cpp` |
-| ~~4~~ | ~~HUD as a real UI tree~~ — **done**: all five screens are `*.ui.xml` scenes under `assets/scenes/`, serialized at build time. | |
-| 4b | **A `<Stack>` container in sif.** The overlay backdrop is still drawn from C++ because the layout engine stacks children in a line and has nothing that puts one element on top of another. | Still hand-placed labels with an approximate centring formula, though they now show score, blast radius, bomb budget and speed. Replace them with a `*.ui.xml` scene through sif's layout engine, which measures text with the real font metrics. | `view/src/state/States.cpp` |
-| ~~5~~ | ~~Player name entry~~ — **done**: `SettingsState` plus `logic::PlayerProfile`, persisted to `assets/player.json`. Reachable from the menu and from the save screen. | |
-| 6 | **Tuning values into JSON.** `WorldConfig`, `ScoreRules` and the constants in `Character.cpp` are struct literals. sif's asset pipeline reads arbitrary JSON already. | `logic/include/bomberman/logic/World.h`, `logic/src/entity/Character.cpp` |
-| 7 | **Static tiles in `constant_items`.** The arena is rebuilt every frame although it only changes when a block is destroyed. `sif::rnd::FrameContext` carries a `redrawing` flag that nothing reads yet. | `view/src/ArenaView.cpp` |
-
-## 2. Build and repository
-
-| # | What | Where |
-|---|------|-------|
-| 8 | **Real sif repository URL and a pinned tag.** `SIF_GIT_REPOSITORY` is a placeholder and `SIF_GIT_TAG` is `main`; a moving branch makes the build non-reproducible. | `cmake/GetSif.cmake` |
-| ~~9~~ | ~~Upstream fix: sif reads nlohmann/json from the consumer's source tree~~ — **done upstream**: sif now uses `PROJECT_SOURCE_DIR` (tracks the most recent `project()` call, i.e. sif's own root even when fetched as a subproject) instead of `CMAKE_SOURCE_DIR`. This project still downloads the header into `sif_SOURCE_DIR/external/json` before `add_subdirectory`, since sif does not fetch json itself. | |
-| ~~10~~ | ~~Upstream fix: promote the SFML backend to a real target~~ — **done upstream**: `app/sfml` + `app/headless` + `Graphics_Factory.*` moved into `sif/backends/`, building `sif_sfml`. `cmake/GetSif.cmake` no longer globs or compiles a single line of sif's sources itself. | |
-| 11 | **`-Werror` in CI** once the tree has been warning-clean for a while. | `CMakeLists.txt` |
-| 12 | **Official `.clang-format`.** The file here is sif's; replace it with the one from Blackboard before submitting. | `.clang-format` |
-| 13 | **Sprite sheet.** Add the Bomberman sheet linked from the assignment under `assets/graphics/sprites/`. Do **not** reuse the Pac-Man project's `Broforce_boss_sprites` or the Cowboy Bebop image — commercial art in a public repository. | `assets/` |
-| ~~17~~ | ~~Upstream: SFML linked into the demo executable only~~ — **done upstream**, folded into item 10: `sif_sfml` itself does `target_link_libraries(sif_sfml PUBLIC sfml-graphics sfml-window sfml-system sfml-audio)`, so every consumer gets SFML transitively and cannot compile against a mismatched copy on the default include path. | |
-| ~~16~~ | ~~Upstream: sif's own SFML search accepted SFML 3~~ — **done upstream**: sif now has its own `cmake/GetSFML.cmake`, structurally identical in spirit to this project's, deliberately rejecting SFML 3. It is genuinely isolated from *this* project's own SFML choice, not merely "also correct" - see item 18. | |
-| 18 | **Isolation between this project's own SFML search and sif's internal one**, now that sif finds SFML for itself. Two failure modes had to be closed, not just one: (a) a shared variable name (`SFML_DIR`) letting one project's choice silently become the other's, and (b) `find_package`'s Config-mode lookup consulting `<PackageName>_DIR` *before* any `PATHS`/`NO_DEFAULT_PATH` argument is even considered - verified by deliberately reproducing it (an ancestor scope's `SFML_DIR` pointing at a fake SFML 3.0.0 was still picked up by a `PATHS ... NO_DEFAULT_PATH`-only search). sif's fix: read only `SIF_SFML_DIR` (never the generic `SFML_DIR`/`SFML_ROOT`), and shadow `SFML_DIR` with a **local, non-cache** variable for the duration of its own search, which CMake prefers over a same-named cache entry within that scope and its descendants without ever touching the cache entry an embedding project may have set for itself. This project's own, independent search (`cmake/GetSFML.cmake`, called from `view/CMakeLists.txt`) is deliberately kept out of the root `CMakeLists.txt` for the same reason: a scope that is an *ancestor* of where sif gets fetched can still leak into sif's search (CMake target names are visible to descendant scopes by design) - a sibling scope cannot. Verified directly: a sibling project's own `find_package(SFML 3...)` and sif's own search were run in the same configure, with the generic `SFML_DIR` cache variable already pointing at the 3.x install; sif still resolved its own 2.6.1 correctly and the sibling's `SFML_DIR` cache entry came out untouched. | `cmake/GetSFML.cmake`, `view/CMakeLists.txt` |
-| ~~15~~ | ~~Upstream fix: `Point2`'s constexpr default constructor defined out of line~~ — **done upstream**: now `constexpr Point2() = default;` directly in the header. The `AABB` workaround (explicit member initialisers instead of `= default`) has been reverted; `AABB()` is `constexpr = default` again. | |
-| 14 | **Report** (diagrams done: `uml/logic.puml`, `uml/view.puml`, `uml/ai.puml`, `uml/patterns.puml`). The retake grades "the diagrams of your class structure" as part of code quality. sif's `uml/` shows the format. | new `uml/`, `report/` |
-
-## 3. Defence preparation
-
-The retake weights the oral defence at **40%**, with explicit questions about how AI was used
-and whether the code is understood. Worth being able to explain without notes:
-
-- why `IEntityFactory` is in the logic library and its implementation is not;
-- what exactly is pushed through the Observer pattern and what is pulled, and why that split;
-- why the world is normalized to `[-1, 1]` and what breaks if it is not;
-- why bombs hold a `weak_ptr` to their owner and characters hold `shared_ptr`;
-- why transitions in `StateManager` are deferred to the end of the frame;
-- what the `tolerance` constant in `Score::run` is doing and how it was found.
+Read **[REVIEW.md](REVIEW.md)** for the full analysis this list was produced from — what was
+checked, how, and the reasoning behind every entry below.
 
 ---
 
-## 4. What was taken from the Pac-Man project, and what was dropped
+## Before you can submit at all
+
+🔲 **Repository link is missing from the README.** The assignment requires it in the report
+("make sure to mention the link to the repo"); right now `README.md` names you and your
+student number but contains no URL at all, and neither does `TODO.md`/`PLAN.md`. Add the
+GitHub URL near the top of `README.md`, and add a CircleCI status badge next to it — the
+badge is also the easiest way to satisfy "the final commit must show a successful build."
+*(5 minutes.)*
+
+🟡 **`SIF_GIT_TAG` is `"main"`, a moving branch — and `sukhoviidaniil/sif` currently has no
+tags at all** (checked directly against the live repository: no tags exist). Pinning to a
+release means, first, tagging a release *on the sif repository itself*
+(`git tag v1.0 && git push --tags`), then setting `SIF_GIT_TAG` in
+`Bomberman/cmake/GetSif.cmake` to that tag. Two repositories, in order — only you can do the
+first half. *(15 minutes once you're at a computer with push access to both repos.)*
+
+🔲 **No `report/` document exists yet.** The assignment grades this as part of Core
+Functionality (20%) and expects "an overview of your design choices and the diagrams of
+your class structure" — not a repeat of the assignment text. The diagrams already exist
+(`uml/logic.puml`, `uml/view.puml`, `uml/ai.puml`, `uml/patterns.puml` — open them with a
+PlantUML renderer, or paste into <https://www.plantuml.com/plantuml/uic>); the report is
+prose *around* them, not a new drawing task. Budget half a day; see REVIEW.md for a
+suggested outline.
+
+---
+
+## ~~Official `.clang-format`~~ ❌ NOT POSSIBLE AS WRITTEN
+
+The old wording said: *"The file here is sif's; replace it with the one from Blackboard
+before submitting."* You checked Blackboard directly — **no such file exists there**, for
+this course, this year. That instruction cannot be completed as written; searching for it
+further only costs time.
+
+🔲 **What to actually do:** the current `.clang-format` is a reasonable, standard C++20
+style (LLVM base, 4-space indent, 120 columns) and both this project and sif already
+conform to it. Either:
+- keep it as-is and say so in the report — "no official style file was provided, so I
+  adopted one and applied it consistently across both repositories" is a complete,
+  defensible answer if asked at the defence — or
+- run `clang-format -i` across both trees once more right before submitting, just to be
+  certain nothing has drifted, and note the command you used.
+
+Do **not** spend time searching for a file that isn't there.
+
+---
+
+## Gameplay and design — genuinely open
+
+🔲 **Balance constants still live as C++ literals**, not in `assets/config.json`:
+`decision_interval` (0.15s bot re-think rate) in `World.cpp`, `arrival_margin_seconds` and
+`escape_search_depth` in `BotBehaviour.cpp`. Everything *player-facing* (map, power-ups,
+round timing, score weights) is already externalised — these three are AI-internal tuning
+knobs, lower priority, but "everything is data" is not yet 100% true. *(~1 hour if you want
+it; not blocking.)*
+
+🔲 **The arena is redrawn from scratch every frame** (`ArenaView.cpp`) even though it only
+changes when a block is destroyed. `sif::rnd::FrameContext` already carries a `redrawing`
+flag for exactly this; nothing reads it yet. Pure performance, invisible at this game's
+scale — safe to leave, worth mentioning if asked about performance at the defence.
+
+🔲 **The pause/game-over backdrop is still a hand-drawn `Rectangle`** in `States.cpp`, not
+part of the `*.ui.xml` scene, because sif's layout engine has no container that stacks one
+element on top of another (everything lays out in a line). Documented as a `TODO(daniil)`
+in `States.cpp`. Cosmetic only.
+
+---
+
+## Fixed during this review (verified, not just claimed)
+
+✅ **DONE — sif-internal regression tests were living in Bomberman's test suite.**
+`AssetLifetimeTests.cpp` and `AssetThreadingTests.cpp` test sif's own `AssetDataNode`,
+`AssetHandle::lock()` and `IAssetLoader::runs_on_main_thread()` — none of it is Bomberman
+logic. Moved to `sif/sif/test/`, where sif's own CI now runs them (sif: 80 → 88 tests).
+Bomberman's suite is 87 tests of **only** Bomberman logic, which is what "the tests you
+wrote" should show a grader.
+
+✅ **DONE — `logic/`, `view/` and `test/` had reverted to `file(GLOB...)`** for their source
+lists, silently undoing an earlier fix for a real, previously-hit bug (an IDE's incremental
+build not always triggering a CMake reconfigure when a `.cpp` was added, producing a
+confusing "undefined reference" linker error nowhere near the actual cause). Converted back
+to explicit file lists in all three. **If this reverts a third time, treat it as a real
+regression, not a style choice** — it has cost real debugging time twice already.
+
+✅ **DONE — `-Werror` is now on**, in both this project's and sif's root `CMakeLists.txt`.
+Verified warning-clean in all four build configurations: sif standalone (engine-only and
+full), Bomberman standalone (logic-only and full, both against the local sif checkout).
+
+✅ **DONE — the "no SFML installed" CI job was not actually testing that.**
+`add_subdirectory(view)` ran unconditionally, so CMake's *configure* step always reached
+`sif_sfml` and always searched for (or, without `libsfml-dev`, fetched and built from
+source) SFML — regardless of which target was later built. Added
+`-DBOMBERMAN_BUILD_VIEW=OFF`, which keeps `view/` and `app/` out of the configure step
+entirely, and taught `cmake/GetSif.cmake` to turn off sif's own `SIF_BUILD_SFML_BACKEND` in
+that case too. CI's `logic` job now uses this flag and genuinely never touches SFML.
+Verified: configuring with the flag produces no `sif: SFML ...` message at all, `view/` does
+not appear in the build tree, and `bomberman_tests` still links and passes.
+
+---
+
+## Everything else — see REVIEW.md for the full accounting
+
+✅ **DONE** — sif's own SFML search (`sif/cmake/GetSFML.cmake`) is isolated from this
+project's own (`cmake/GetSFML.cmake`), including against `find_package`'s `<Pkg>_DIR`
+lookup bypassing `NO_DEFAULT_PATH`. See REVIEW.md, "Build system" section, for how this was
+verified (an ancestor-scope leak was deliberately reproduced and closed).
+
+✅ **DONE** — Bot AI (`logic/ai/`), power-ups with reveal-shielding, the full save-score
+flow, the `*.ui.xml` UI, and the asset pipeline (`sif_sprite_packer` + `Asset_GUID_Assignment`
++ `Asset_Reference_Serialization`, all three sif tools, none of it hand-rolled) are all
+built, tested and verified live (screenshots and details in REVIEW.md). Not repeated here.
+
+---
+
+## What was taken from the Pac-Man project, and what was dropped
+
+Unchanged from the previous version of this list — kept for the defence, where you may be
+asked what carried over and why.
 
 ### Kept and reworked
 

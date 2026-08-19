@@ -24,11 +24,15 @@ jobs:
             apt-get update -qq
             DEBIAN_FRONTEND=noninteractive apt-get install -y -qq build-essential cmake git ca-certificates
       - run:
-          name: Configure
-          # The logic library and the tests do not need SFML, but the
-          # top-level CMakeLists looks for it because the view target
-          # does - so this job builds the two targets directly.
-          command: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release || true
+          name: Configure (BOMBERMAN_BUILD_VIEW=OFF - view/ and app/ are never processed)
+          # This is what actually makes "no SFML installed" true: CMake's
+          # configure step walks the whole CMakeLists.txt tree regardless
+          # of which target is later built, so unless view/ (and
+          # therefore sif_sfml) is kept out of that tree entirely, sif
+          # would go and fetch-build SFML from source the moment this job
+          # configures - slow, and not actually the guarantee this job
+          # exists to demonstrate.
+          command: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DBOMBERMAN_BUILD_VIEW=OFF
       - run:
           name: Build and run the logic tests
           command: |

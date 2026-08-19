@@ -9,12 +9,15 @@
 # copied in - one self-registering SIF_TEST macro, nothing to wire up.
 # ---------------------------------------------------------------------------
 
-file(GLOB BOMBERMAN_TEST_SRC "*.cpp")
-
 # The framework itself (registrar + runner main) comes from the fetched
-# sif sources; only the test *cases* below are ours.
+# sif sources; only the test *cases* below are ours. Listed rather than
+# globbed - see logic/CMakeLists.txt and view/CMakeLists.txt for why.
 add_executable(bomberman_tests
-        ${BOMBERMAN_TEST_SRC}
+        BotAiTests.cpp
+        ConfigTests.cpp
+        LogicTests.cpp
+        PlayerProfileTests.cpp
+        PowerUpTests.cpp
         "${SIF_TEST_FRAMEWORK_DIR}/TestFramework.cpp"
         "${SIF_TEST_FRAMEWORK_DIR}/main.cpp"
 )

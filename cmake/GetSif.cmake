@@ -42,9 +42,21 @@ set(SIF_SOURCE_DIR "" CACHE PATH "Local sif checkout to use instead of downloadi
 
 # sif builds a demo application and its own test suite; a consumer wants
 # neither. The reference SFML backend (sif_sfml) and the asset tools stay
-# on - this project needs both.
+# on by default - this project needs both, through view/ and app/.
+#
+# The one exception: when this project itself was configured with
+# BOMBERMAN_BUILD_VIEW=OFF (a logic-only build, see the root
+# CMakeLists.txt), sif_sfml is not needed either, and sif must be told so
+# explicitly - its own SIF_BUILD_SFML_BACKEND default is ON regardless of
+# what this project ends up using it for, so without this override sif
+# would still go and find or fetch SFML for a target nothing here links
+# against, defeating the entire point of the logic-only build.
 set(SIF_BUILD_DEMO_APP OFF CACHE BOOL "" FORCE)
 set(SIF_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+if(NOT BOMBERMAN_BUILD_VIEW)
+    set(SIF_BUILD_SFML_BACKEND OFF CACHE BOOL "" FORCE)
+    set(SIF_BUILD_TOOLS OFF CACHE BOOL "" FORCE)
+endif()
 
 if(SIF_SOURCE_DIR)
     message(STATUS "sif: using local checkout at ${SIF_SOURCE_DIR}")
