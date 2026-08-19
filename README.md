@@ -39,25 +39,47 @@ by good intentions. CI has a job that proves it on a machine with no SFML packag
 
 ## Building
 
-Requirements: CMake ≥ 3.20, a C++20 compiler, **SFML 2.6.x** (with the `audio`
-component), and network access on the first configure (sif and nlohmann/json are
-downloaded).
-
-> **SFML 3 will not work.** It is not source-compatible with SFML 2 — `sf::Event` became a
-> variant, `sf::Rect` swapped `left/top/width/height` for `position/size`, `sf::Text` and
-> `sf::Sound` take their resource in the constructor, `pollEvent` returns an `optional`, and
-> so on. `cmake/GetSFML.cmake` therefore inspects every SFML installation it can find and
-> picks a 2.x one; if both versions are installed it will *not* silently take the newer one.
-> If the wrong copy is chosen, point at the right one explicitly:
->
-> ```bash
-> cmake -S . -B build -DSFML_DIR=/path/to/SFML-2.6.1/lib/cmake/SFML
-> ```
->
-> With no SFML 2.x installed at all, the build fetches and compiles 2.6.1 itself
-> (`-DBOMBERMAN_FETCH_SFML=OFF` to disable).
+Requirements: CMake ≥ 3.20, a C++20 compiler, and network access on the first configure
+(sif and nlohmann/json are downloaded). SFML itself does not have to be prepared or passed
+in — see below.
 
 Verified on the reference platform: **Ubuntu 24.04, GCC 13, SFML 2.6.1**.
+
+### Two independent SFML searches, on purpose
+
+This project's actual gameplay code (`logic/`, `view/`) never includes an `<SFML/...>`
+header — it draws entirely through `sif_sfml`, the reference backend sif ships, which
+**sif finds SFML for itself**. Nothing here has to locate, build, or hand SFML to sif; it
+is not this project's concern, and passing it one is exactly what could break sif's own
+demo or asset tools for someone else who fetches sif on its own (see below).
+
+`cmake/GetSFML.cmake` in *this* repository is a second, entirely separate search — this
+project's own, for whatever direct SFML use it might have of its own one day. It is
+deliberately included from `view/CMakeLists.txt`, a sibling of where sif is fetched, never
+from the root `CMakeLists.txt`: a CMake scope that is an *ancestor* of the sif fetch can
+leak its own SFML choice into sif's internal search (CMake target visibility flows
+downward to descendant scopes), while a sibling scope cannot. That is what makes it
+possible, in principle, for this project to target **SFML 3.x** for its own code while
+`sif_sfml` keeps using 2.6.x internally, in the very same build, with neither one aware of
+the other. (Today this project has no direct SFML usage of its own, so the search runs and
+succeeds but nothing links its result yet — the point is that the capability, and the
+isolation, are both there and verified, not that anything currently depends on it.)
+
+> **`sif_sfml` needs SFML 2.6.x specifically** — its C++ source uses the 2.6 API directly
+> (`sf::Event.type`, `sf::Rect.left/top/width/height`, ...), which SFML 3 changed
+> incompatibly. sif's own `cmake/GetSFML.cmake` rejects SFML 3 for exactly this reason, and
+> does so using only its own, sif-prefixed inputs (`SIF_SFML_DIR`, not the generic
+> `SFML_DIR`) so this project's *own* SFML choice - whatever it is - can never be mistaken
+> for sif's. If you need to point sif at a specific SFML 2.6.x install:
+> ```bash
+> cmake -S . -B build -DSIF_SFML_DIR=/path/to/SFML-2.6.1/lib/cmake/SFML
+> ```
+> With no SFML 2.6.x found at all, sif fetches and builds it itself
+> (`-DSIF_FETCH_SFML=OFF` to disable).
+>
+> This project's *own* search (`cmake/GetSFML.cmake`, unrelated to sif's) uses the
+> conventional `SFML_DIR`/`SFML_ROOT` and `-DBOMBERMAN_FETCH_SFML=OFF`, since it is not
+> shared with anything else.
 
 ```bash
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Release

@@ -15,8 +15,18 @@
 #                                         the engine without pushing)
 #   -DSIF_GIT_TAG=<branch|tag|sha>        pin a different revision
 #
-# FetchContent caches the download in the build directory, so this costs
-# nothing after the first configure.
+# What this file does *not* do, on purpose: it does not look for SFML, does
+# not pass any SFML target to sif, and does not need sif to have found one
+# before it returns. sif finds its own SFML entirely by itself (see its own
+# cmake/GetSFML.cmake) - lazily, the first time one of ITS OWN options that
+# needs it (SIF_BUILD_TOOLS, SIF_BUILD_SFML_BACKEND) is processed, using
+# only sif-prefixed inputs that this project's own separate SFML search
+# (cmake/GetSFML.cmake, called from view/CMakeLists.txt, a sibling of this
+# fetch rather than an ancestor of it) never touches. That is what keeps
+# the two genuinely independent: Bomberman could point its own search at a
+# different SFML major version entirely and sif_sfml would be unaffected,
+# because sif never sees or relies on anything this project's own search
+# produces.
 # ---------------------------------------------------------------------------
 
 include(FetchContent)
@@ -30,9 +40,9 @@ set(SIF_GIT_TAG "main"
         CACHE STRING "Git tag/branch/commit of the sif engine to build against")
 set(SIF_SOURCE_DIR "" CACHE PATH "Local sif checkout to use instead of downloading")
 
-# sif builds an SFML demo application and its own test suite by default.
-# A consumer wants neither: they cost build time and pull SFML in through
-# a second path.
+# sif builds a demo application and its own test suite; a consumer wants
+# neither. The reference SFML backend (sif_sfml) and the asset tools stay
+# on - this project needs both.
 set(SIF_BUILD_DEMO_APP OFF CACHE BOOL "" FORCE)
 set(SIF_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 
@@ -49,14 +59,33 @@ else()
     )
 endif()
 
-# nlohmann/json has to be in place *before* sif is configured: sif's
-# CMakeLists reads it from ${CMAKE_SOURCE_DIR}/external/json, which -
-# once sif is a subproject - resolves to this project's source tree.
-#
-# TODO(daniil): upstream this. sif should look for json relative to its
-#  own CMAKE_CURRENT_SOURCE_DIR (or, better, use find_package/FetchContent
-#  itself) instead of the top-level source dir; then this block can go.
-set(BOMBERMAN_JSON_DIR "${CMAKE_SOURCE_DIR}/external/json")
+# Populated in two steps (Populate, then our own logic, then
+# add_subdirectory) rather than the one-call FetchContent_MakeAvailable,
+# because nlohmann/json has to be in place *before* sif's own
+# CMakeLists.txt runs: sif looks for it at its own
+# PROJECT_SOURCE_DIR/external/json (its own root, correctly - not this
+# project's - now that sif resolves that path relative to itself rather
+# than to whichever project embeds it). FetchContent_Populate downloads
+# the source and sets sif_SOURCE_DIR without processing sif's
+# CMakeLists.txt yet, which is exactly the window this needs.
+# CMP0169 (CMake 3.30+) deprecates the FetchContent_Populate(<name>) form
+# below in favour of FetchContent_MakeAvailable - but that one-call form
+# processes the dependency's CMakeLists.txt immediately, and this file
+# needs a window *between* downloading sif's source and letting its
+# CMakeLists.txt run, to drop nlohmann/json.hpp into place first. Setting
+# the policy to OLD locally (only for this call, only on CMake versions
+# that know about it) keeps that two-step sequence working without the
+# deprecation warning on newer CMake.
+if(POLICY CMP0169)
+    cmake_policy(SET CMP0169 OLD)
+endif()
+
+FetchContent_GetProperties(sif)
+if(NOT sif_POPULATED)
+    FetchContent_Populate(sif)
+endif()
+
+set(BOMBERMAN_JSON_DIR "${sif_SOURCE_DIR}/external/json")
 if(NOT EXISTS "${BOMBERMAN_JSON_DIR}/json.hpp")
     message(STATUS "nlohmann/json: downloading single-header into ${BOMBERMAN_JSON_DIR}")
     file(DOWNLOAD
@@ -72,73 +101,17 @@ if(NOT EXISTS "${BOMBERMAN_JSON_DIR}/json.hpp")
     endif()
 endif()
 
-FetchContent_MakeAvailable(sif)
+add_subdirectory("${sif_SOURCE_DIR}" "${sif_BINARY_DIR}")
 
-# sif ships a reference SFML backend (renderer, audio player, event
-# collector, one asset loader per asset type) under app/, outside the
-# library targets. It is exactly the representation layer this project
-# needs, and re-typing it here would be the kind of duplication the
-# assignment explicitly warns about - so it is compiled from the fetched
-# sources instead.
-#
-# TODO(daniil): ask upstream to promote app/sfml + app/headless into a
-#  proper sif_sfml target. Then this whole block collapses into one
-#  target_link_libraries(... sif_sfml).
-# NOTE the argument order: file(GLOB <variable> [CONFIGURE_DEPENDS]
-# <globs...>). CONFIGURE_DEPENDS goes *after* the output variable. Written
-# the other way round - file(GLOB CONFIGURE_DEPENDS SIF_BACKEND_SRC ...) -
-# CMake takes CONFIGURE_DEPENDS as the variable name and SIF_BACKEND_SRC
-# as a glob pattern that matches nothing, so the real variable stays
-# empty and the only symptom is "No SOURCES given to target" at generate
-# time, several lines further down.
-file(GLOB SIF_BACKEND_SRC CONFIGURE_DEPENDS
-        "${sif_SOURCE_DIR}/app/sfml/*.cpp"
-        "${sif_SOURCE_DIR}/app/headless/*.cpp"
-        "${sif_SOURCE_DIR}/app/Graphics_Factory.cpp"
-)
+# sif_sfml - sif's promoted reference backend target (renderer, audio
+# player, event collector, every asset loader, SFML itself all
+# transitively linked) - is ready to use the moment this returns:
+# target_link_libraries(your_target PUBLIC sif_sfml) and nothing else. The
+# manual glob-and-compile of sif's app/sfml + app/headless sources that
+# used to live here is gone along with the workaround comment explaining
+# it was standing in for "a proper sif_sfml target" - that target now
+# exists, in sif itself.
 
-# An empty result means the fetched sif does not have the layout this
-# block expects - a moved directory, a shallow clone of the wrong tag, or
-# a half-populated FetchContent cache. Saying so here beats letting
-# add_library fail with a message that names neither sif nor the path.
-if(NOT SIF_BACKEND_SRC)
-    message(FATAL_ERROR
-            "sif: no backend sources found under ${sif_SOURCE_DIR}/app.\n"
-            "Expected app/sfml/*.cpp, app/headless/*.cpp and app/Graphics_Factory.cpp "
-            "in the fetched engine. Check SIF_GIT_TAG (currently '${SIF_GIT_TAG}') or, "
-            "if you are using -DSIF_SOURCE_DIR, that it points at the repository root "
-            "rather than at its sif/ subdirectory.")
-endif()
-
-# Guard the include order rather than let it fail obscurely: without the
-# SFML targets this library still *builds a target*, it just compiles
-# without any -I for SFML - so the compiler silently falls back to
-# whatever <SFML/...> it finds on the default include path. On a machine
-# with SFML 3 in /usr/include and SFML 2.6 in /opt, that means CMake
-# reports the right version while the compiler reads the wrong headers.
-if(NOT TARGET sfml-graphics)
-    message(FATAL_ERROR
-            "sif: the SFML targets do not exist yet. Include cmake/GetSFML.cmake "
-            "before cmake/GetSif.cmake - sif_sfml_backend has to link them.")
-endif()
-
-add_library(sif_sfml_backend STATIC ${SIF_BACKEND_SRC})
-target_include_directories(sif_sfml_backend PUBLIC "${sif_SOURCE_DIR}/app")
-
-# sfml-* and not just sif_lib: these sources include <SFML/...> directly,
-# so the include directory has to reach *this* target. Linking it only
-# into the consumer (bomberman_view) is enough to make the program link,
-# which is exactly why the omission survived on a machine where SFML sits
-# in the default include path and nothing needed an -I at all.
-target_link_libraries(sif_sfml_backend
-        PUBLIC
-        sif_lib
-        sfml-graphics
-        sfml-window
-        sfml-system
-        sfml-audio
-)
-
-# Exposed so the test target can reuse sif's test framework header
-# instead of this project growing a second copy of it.
+# Exposed so the test target can reuse sif's test framework header instead
+# of this project growing a second copy of it.
 set(SIF_TEST_FRAMEWORK_DIR "${sif_SOURCE_DIR}/sif/test" CACHE INTERNAL "")

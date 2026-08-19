@@ -34,17 +34,10 @@ namespace bomberman::logic {
      * Here `half` is a half-size, everywhere, and there is one class.
      */
     struct AABB {
-        // Explicit zeros rather than `= default` plus a defaulted
-        // Point2: sif declares Point2's default constructor constexpr
-        // but defines it in a .cpp, so relying on it here produces a
-        // "used but never defined" warning in every translation unit.
-        //
-        // TODO(daniil): upstream fix - a constexpr constructor has to be
-        //  defined in the header to be usable from another TU at all.
         sif::math::Point2 center{0.f, 0.f};
         sif::math::Vector2 half{0.f, 0.f};
 
-        AABB() : center(0.f, 0.f), half(0.f, 0.f) {}
+        constexpr AABB() = default;
         constexpr AABB(const sif::math::Point2 c, const sif::math::Vector2 h) : center(c), half(h) {}
 
         /// @brief Square box of the given full size, centred on a point.

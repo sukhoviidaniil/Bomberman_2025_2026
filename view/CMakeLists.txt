@@ -5,9 +5,22 @@
 # factory (which is what attaches a view to each model), the views
 # themselves, the state machine and the SFML-facing Game class.
 #
-# It links sif's reference SFML backend (see cmake/GetSif.cmake) instead
-# of re-implementing a renderer, an audio player and six asset loaders.
+# Links sif's reference SFML backend (sif_sfml) instead of re-implementing
+# a renderer, an audio player and six asset loaders - the whole point of
+# sif_sfml being a promoted target rather than something every consumer
+# glob-compiles for itself. SFML itself comes along transitively; this file
+# does not link sfml-graphics/window/system/audio directly, and does not
+# need to - none of bomberman_view's own sources #include <SFML/...>.
 # ---------------------------------------------------------------------------
+
+# Bomberman's own, independent SFML search - see the file for why this is
+# called from here (a sibling of the sif fetch) rather than from this
+# project's root, and why it is entirely separate from whatever SFML
+# sif_sfml itself is built against. Nothing below currently links its
+# result: Bomberman has no direct SFML usage of its own yet, so this only
+# proves the capability is there, ready, the moment something needs it -
+# see cmake/GetSFML.cmake's own header for the reasoning.
+include("${CMAKE_SOURCE_DIR}/cmake/GetSFML.cmake")
 
 file(GLOB_RECURSE BOMBERMAN_VIEW_SRC "src/*.cpp")
 
@@ -17,9 +30,5 @@ target_include_directories(bomberman_view PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/inc
 target_link_libraries(bomberman_view
         PUBLIC
         bomberman_logic
-        sif_sfml_backend
-        sfml-graphics
-        sfml-window
-        sfml-system
-        sfml-audio
+        sif_sfml
 )

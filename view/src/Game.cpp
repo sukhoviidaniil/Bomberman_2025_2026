@@ -54,7 +54,7 @@ namespace bomberman::view {
         };
         const sif::ast::EC_Config collector_config{.type = sif::ast::RB_Type::SFML};
 
-        app::Graphics_Factory& factory = app::Graphics_Factory::instance();
+        sif::backend::Graphics_Factory& factory = sif::backend::Graphics_Factory::instance();
 
         renderer_ = factory.make_Renderer(render_config);
         renderer_->track_global(bus_);

@@ -21,10 +21,16 @@ add_compile_options(-Wall -Wextra -Wpedantic -Wshadow -Wconversion -Wsign-conver
 
 option(BOMBERMAN_BUILD_TESTS "Build the Bomberman test suite" ON)
 
-# Order matters: GetSif.cmake creates the sif_sfml_backend target, which
-# compiles SFML-using sources and therefore has to link the SFML targets -
-# so those have to exist first.
-include(cmake/GetSFML.cmake)
+# sif finds its own SFML entirely by itself (see cmake/GetSFML.cmake in
+# sif's own repository) - this project never needs to locate or pass in
+# an SFML target for sif's sake, and does not do so here. This project's
+# *own*, separate SFML search (cmake/GetSFML.cmake, for Bomberman's own
+# potential direct use, independent of whatever version sif_sfml is built
+# against) intentionally does not run from this root scope either - see
+# the comment at the top of that file for why it is called from
+# view/CMakeLists.txt instead: calling it here, an ancestor of the sif
+# fetch below, would be exactly the kind of leak the isolation is meant
+# to prevent.
 include(cmake/GetSif.cmake)
 
 add_subdirectory(logic)
