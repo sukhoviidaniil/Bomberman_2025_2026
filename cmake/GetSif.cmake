@@ -33,7 +33,7 @@ include(FetchContent)
 
 set(SIF_GIT_REPOSITORY "https://github.com/sukhoviidaniil/sif.git"
         CACHE STRING "Git repository the sif engine is fetched from")
-set(SIF_GIT_TAG "v2.0.0"
+set(SIF_GIT_TAG "v2.0.1"
         CACHE STRING "Git tag/branch/commit of the sif engine to build against")
 set(SIF_SOURCE_DIR "" CACHE PATH "Local sif checkout to use instead of downloading")
 
