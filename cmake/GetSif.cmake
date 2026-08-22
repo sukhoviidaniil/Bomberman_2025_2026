@@ -31,12 +31,9 @@
 
 include(FetchContent)
 
-# TODO(daniil): pin SIF_GIT_TAG to a release tag before submitting. A moving branch
-#  makes the build non-reproducible, which is exactly what a grader (and
-#  CI) will notice first.
 set(SIF_GIT_REPOSITORY "https://github.com/sukhoviidaniil/sif.git"
         CACHE STRING "Git repository the sif engine is fetched from")
-set(SIF_GIT_TAG "main"
+set(SIF_GIT_TAG "v2.0.0"
         CACHE STRING "Git tag/branch/commit of the sif engine to build against")
 set(SIF_SOURCE_DIR "" CACHE PATH "Local sif checkout to use instead of downloading")
 

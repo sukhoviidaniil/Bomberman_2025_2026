@@ -68,8 +68,15 @@ package "bomberman::logic" {
         +get_TilePos(point), get_center(cell)
         +spawn_cells()
     }
-    enum Tile { Free \n Indestructible \n Destructible }
-    struct TilePos { +row : int \n +col : int }
+    enum Tile {
+        Free
+        Indestructible
+        Destructible
+    }
+    struct TilePos {
+        +row : int
+        +col : int
+    }
 
     class Score <<Observer>> {
         +points()

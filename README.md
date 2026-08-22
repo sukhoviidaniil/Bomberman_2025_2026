@@ -2,15 +2,19 @@
 
 **Author:** Daniil Sukhovii
 **Student number:** s0240228
+**Repository:** [click](https://github.com/sukhoviidaniil/Bomberman_2025_2026)
 
-A Bomberman battle-mode game in C++20, built on top of the [sif](cmake/GetSif.cmake) engine
-(asset system, UI layout engine, render pipeline, audio interface, event bus), which is
-fetched automatically at configure time.
+A Bomberman battle-mode game in C++20, built on top of the [sif](https://github.com/sukhoviidaniil/sif)
+engine (asset system, UI layout engine, render pipeline, audio interface, event bus; the
+fetch mechanism itself is `cmake/GetSif.cmake`), which is fetched automatically at
+configure time.
 
-This repository is the **starting state** of the project: the build system, the coordinate
-system, the entity model, the event/observer plumbing, the factories, the state machine and
-the test suite are in place and working. The gameplay pieces that are still missing are
-marked with `TODO(daniil)` in the code and listed in [TODO.md](TODO.md).
+The build system, the coordinate system, the entity model, the event/observer plumbing,
+the factories, the state machine, the bot AI, power-ups, the UI (menu, settings, HUD,
+pause, save-score) and the test suite are all in place and working — this is the
+project as it stands for submission, not a starting skeleton. Anything still open is
+marked with `TODO(daniil)` in the code at the relevant spot; there is no separate
+tracking document.
 
 ---
 
@@ -19,16 +23,19 @@ marked with `TODO(daniil)` in the code and listed in [TODO.md](TODO.md).
 ```
 logic/          bomberman_logic — the game rules. Links sif only; no SFML anywhere.
   Direction, TileGrid/TilePos/Tile, AABB, Entity/Actor/Character/Bomb/Explosion/PowerUp,
-  World (the entity controller), Score, ScoreBoard, IEntityFactory, ai/PathFinder
+  World (the entity controller), Score, ScoreBoard, PlayerProfile, PowerUpRules,
+  IEntityFactory, ai/ (DangerMap, BotBehaviour + five behaviours, BotBrain, PathFinder)
 
 view/           bomberman_view — the representation. Everything that knows what things look like.
   EntityView + the four concrete views, SFMLEntityFactory (the concrete abstract factory),
-  ArenaView, Game, state/ (State, StateManager, Menu/Level/Paused/GameOver)
+  ArenaView, AudioDirector, GameAssets, UiScene (loads the *.ui.xml screens),
+  Game, state/ (State, StateManager, Menu/Settings/Level/Paused/SaveScore)
 
 app/            main.cpp and the asset-registry build step
-assets/         font, asset descriptors, generated registry
-test/           bomberman_tests — logic tests, no window required
+assets/         sprites, sound, font, scenes/ (*.ui.xml), asset descriptors, generated registry
+test/           bomberman_tests — 87 logic tests, no window required
 cmake/          GetSif.cmake, GetSFML.cmake
+uml/            class diagrams (logic, view, ai, patterns) referenced from report.md
 ```
 
 The split is the one the assignment requires: `bomberman_logic` links `sif_lib` and nothing
@@ -115,11 +122,9 @@ follows is a pile of undefined references in an unrelated target, pointing
 nowhere near the cause. If a build ever does look stale, reconfigure from
 scratch (CLion: *Reset Cache and Reload Project*).
 
-Warnings are on everywhere (`-Wall -Wextra -Wpedantic -Wshadow -Wconversion -Wsign-conversion`)
-and this project's own code produces none. One warning does repeat once per translation unit —
-`sif::math::Point2::Point2()` is declared `constexpr` in a header but defined in a `.cpp`, so no
-consumer can ever see its definition. It is an upstream defect, tracked as item 15 in
-[TODO.md](TODO.md).
+Warnings are on everywhere (`-Wall -Wextra -Wpedantic -Wshadow -Wconversion -Wsign-conversion
+-Werror`), for both this project and sif, and the whole tree is clean — a new warning now
+fails the build on the commit that introduced it.
 
 ---
 
@@ -367,10 +372,24 @@ The headless backend keeps the parallelism: `sf::Image` and
 ./build/test/bomberman_tests
 ```
 
-21 cases covering the normalized coordinate mapping, arena generation (pillar lattice, escapable
-spawns), `Score` reacting to events only, power-up effects and bomb budgeting, a full round in
-the `World` (fuse → blast → block destruction → round end), and the path finder including the
-"no path" and "nearest safe cell" cases.
+87 cases across five files, all against `HeadlessEntityFactory` — no window, no SFML:
+
+- `LogicTests.cpp` (21) — normalized coordinate mapping, arena generation (pillar lattice,
+  escapable spawns), `Score` reacting to events only, a full round in `World` (fuse → blast
+  → block destruction → round end), the path finder's "no path" and "nearest safe cell" cases.
+- `BotAiTests.cpp` (26) — `DangerMap` against bombs and live explosions, the escape-route
+  timing fix, each of the five behaviours in isolation, personality ordering, and two
+  end-to-end guards (bots do not suicide across six seeded rounds; bots measurably clear
+  blocks over a round).
+- `PowerUpTests.cpp` (14) — weighted drop odds, the reveal-shield surviving the blast that
+  created it (and not surviving a later one), stat caps, bots picking power-ups up.
+- `ConfigTests.cpp` (14) — `GameConfig::load`, defaults, overrides, rejected invalid values,
+  layouts taking priority over a seed.
+- `PlayerProfileTests.cpp` (12) — name editing/capping, persistence round-trip, a corrupt
+  profile file being reported rather than silently accepted.
+
+sif's own asset-system regressions (an asset lifetime bug, a threading bug) live in sif's
+own test suite, not here — see that repository's README.
 
 Two real bugs were found by these tests while writing them: sixty frames of `1/60 s` sum to
 `0.99999994f` (one lost second of score per minute), and the state stack was still empty when
@@ -383,5 +402,5 @@ the first frame checked it. Both are fixed, with the reason recorded in the code
 `assets/graphics/font/DejaVuSans.ttf` — DejaVu Fonts License, see
 `assets/LICENSE-DejaVuSans.txt`.
 
-The sprite sheet linked from the assignment has not been added yet; see `TODO.md`. No
-third-party commercial art is committed to this repository.
+No third-party commercial art is committed to this repository — see
+`assets/ATTRIBUTION.md` for the exact source and licence of everything used.
