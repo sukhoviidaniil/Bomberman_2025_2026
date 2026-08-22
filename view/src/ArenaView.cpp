@@ -6,7 +6,7 @@
  * Disclaimer:
  *   This file is part of Bomberman.
  *   Unauthorized use, reproduction, or distribution is prohibited.
-***************************************************************/
+ ***************************************************************/
 
 #include "bomberman/view/ArenaView.h"
 
@@ -19,8 +19,8 @@
 namespace bomberman::view {
     namespace {
         void push_tile(sif::rnd::RenderFrame& frame, const sif::rnd::Camera& camera,
-                       const sif::asset::AssetHandle<void>& sprite,
-                       const sif::intrnl::Rect& world_rect, const float height_scale) {
+                       const sif::asset::AssetHandle<void>& sprite, const sif::intrnl::Rect& world_rect,
+                       const float height_scale) {
             if (!sprite.ready()) {
                 return;
             }
@@ -40,10 +40,10 @@ namespace bomberman::view {
 
             frame.constant_items.push_back(std::move(item));
         }
-    }
+    } // namespace
 
-    void ArenaView::append_render_items(const logic::TileGrid &grid, const GameAssets &assets,
-                                        sif::rnd::RenderFrame &frame, const sif::rnd::Camera &camera) {
+    void ArenaView::append_render_items(const logic::TileGrid& grid, const GameAssets& assets,
+                                        sif::rnd::RenderFrame& frame, const sif::rnd::Camera& camera) {
         const sif::asset::AssetHandle<void> floor = assets.sprite(assets::tile_floor);
 
         // Two passes, because a single one would let a wall in row 3 be
@@ -65,4 +65,4 @@ namespace bomberman::view {
             }
         }
     }
-}
+} // namespace bomberman::view

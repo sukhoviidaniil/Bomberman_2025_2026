@@ -6,7 +6,7 @@
  * Disclaimer:
  *   This file is part of Bomberman.
  *   Unauthorized use, reproduction, or distribution is prohibited.
-***************************************************************/
+ ***************************************************************/
 
 #include "bomberman/logic/ai/PathFinder.h"
 
@@ -17,9 +17,10 @@
 namespace bomberman::logic::ai {
     namespace {
         /// Shared breadth-first sweep; both public queries are views on it.
-        std::unordered_map<TilePos, TilePos, TilePosHash> sweep(
-            const TileGrid& grid, const TilePos& from, const CellPredicate& passable,
-            const CellPredicate& stop, int max_depth, std::optional<TilePos>& reached) {
+        std::unordered_map<TilePos, TilePos, TilePosHash> sweep(const TileGrid& grid, const TilePos& from,
+                                                                const CellPredicate& passable,
+                                                                const CellPredicate& stop, int max_depth,
+                                                                std::optional<TilePos>& reached) {
 
             std::unordered_map<TilePos, TilePos, TilePosHash> came_from;
             std::unordered_map<TilePos, int, TilePosHash> depth;
@@ -59,9 +60,8 @@ namespace bomberman::logic::ai {
             return came_from;
         }
 
-        std::vector<TilePos> rebuild(
-            const std::unordered_map<TilePos, TilePos, TilePosHash>& came_from,
-            const TilePos& from, const TilePos& to) {
+        std::vector<TilePos> rebuild(const std::unordered_map<TilePos, TilePos, TilePosHash>& came_from,
+                                     const TilePos& from, const TilePos& to) {
 
             if (!came_from.contains(to)) {
                 return {};
@@ -75,26 +75,23 @@ namespace bomberman::logic::ai {
             std::reverse(path.begin(), path.end());
             return path;
         }
-    }
+    } // namespace
 
-    std::vector<TilePos> PathFinder::find_path(
-        const TileGrid &grid, const TilePos &from, const TilePos &to, const CellPredicate &passable) {
+    std::vector<TilePos> PathFinder::find_path(const TileGrid& grid, const TilePos& from, const TilePos& to,
+                                               const CellPredicate& passable) {
 
         if (from == to) {
             return {from};
         }
 
         std::optional<TilePos> reached;
-        const auto came_from = sweep(
-            grid, from, passable,
-            [&to](const TilePos& c) { return c == to; },
-            0, reached);
+        const auto came_from = sweep(grid, from, passable, [&to](const TilePos& c) { return c == to; }, 0, reached);
 
         return rebuild(came_from, from, to);
     }
 
-    Direction PathFinder::first_step(
-        const TileGrid &grid, const TilePos &from, const TilePos &to, const CellPredicate &passable) {
+    Direction PathFinder::first_step(const TileGrid& grid, const TilePos& from, const TilePos& to,
+                                     const CellPredicate& passable) {
 
         const std::vector<TilePos> path = find_path(grid, from, to, passable);
         if (path.size() < 2) {
@@ -111,12 +108,12 @@ namespace bomberman::logic::ai {
         return Direction::None;
     }
 
-    std::optional<TilePos> PathFinder::find_nearest(
-        const TileGrid &grid, const TilePos &from, const CellPredicate &passable,
-        const CellPredicate &goal, const int max_depth) {
+    std::optional<TilePos> PathFinder::find_nearest(const TileGrid& grid, const TilePos& from,
+                                                    const CellPredicate& passable, const CellPredicate& goal,
+                                                    const int max_depth) {
 
         std::optional<TilePos> reached;
         (void)sweep(grid, from, passable, goal, max_depth, reached);
         return reached;
     }
-}
+} // namespace bomberman::logic::ai

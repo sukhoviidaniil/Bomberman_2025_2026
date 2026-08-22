@@ -6,7 +6,7 @@
  * Disclaimer:
  *   This file is part of Bomberman.
  *   Unauthorized use, reproduction, or distribution is prohibited.
-***************************************************************/
+ ***************************************************************/
 #ifndef BOMBERMAN_VIEW_ARENAVIEW_H
 #define BOMBERMAN_VIEW_ARENAVIEW_H
 
@@ -37,11 +37,9 @@ namespace bomberman::view {
      */
     class ArenaView {
     public:
-        static void append_render_items(const logic::TileGrid& grid,
-                                        const GameAssets& assets,
-                                        sif::rnd::RenderFrame& frame,
-                                        const sif::rnd::Camera& camera);
+        static void append_render_items(const logic::TileGrid& grid, const GameAssets& assets,
+                                        sif::rnd::RenderFrame& frame, const sif::rnd::Camera& camera);
     };
-}
+} // namespace bomberman::view
 
-#endif //BOMBERMAN_VIEW_ARENAVIEW_H
+#endif // BOMBERMAN_VIEW_ARENAVIEW_H

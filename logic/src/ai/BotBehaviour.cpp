@@ -6,7 +6,7 @@
  * Disclaimer:
  *   This file is part of Bomberman.
  *   Unauthorized use, reproduction, or distribution is prohibited.
-***************************************************************/
+ ***************************************************************/
 
 #include "bomberman/logic/ai/BotBehaviour.h"
 
@@ -26,9 +26,9 @@ namespace bomberman::logic::ai {
         /// being a fifth of a second early is the difference between a bot
         /// that escapes and one that dies at the edge of the blast.
         constexpr float arrival_margin_seconds = 0.25f;
-    }
+    } // namespace
 
-    bool BotContext::passable(const TilePos &cell) const {
+    bool BotContext::passable(const TilePos& cell) const {
         if (!walkable(grid.get_tile(cell))) {
             return false;
         }
@@ -40,11 +40,11 @@ namespace bomberman::logic::ai {
         return true;
     }
 
-    bool BotContext::within(const TilePos &cell, const int radius) const {
+    bool BotContext::within(const TilePos& cell, const int radius) const {
         return manhattan_distance(self_cell, cell) <= radius;
     }
 
-    const Character * BotContext::nearest_enemy() const {
+    const Character* BotContext::nearest_enemy() const {
         const Character* best = nullptr;
         int best_distance = 0;
 
@@ -76,11 +76,10 @@ namespace bomberman::logic::ai {
         return false;
     }
 
-    std::function<bool(const TilePos&)> passable_and_survivable(
-        const BotContext &ctx, const TilePos &from, const DangerMap &danger) {
+    std::function<bool(const TilePos&)> passable_and_survivable(const BotContext& ctx, const TilePos& from,
+                                                                const DangerMap& danger) {
 
-        const float seconds_per_step =
-            ctx.tiles_per_second > 0.f ? 1.f / ctx.tiles_per_second : 1.f;
+        const float seconds_per_step = ctx.tiles_per_second > 0.f ? 1.f / ctx.tiles_per_second : 1.f;
 
         return [&ctx, &danger, from, seconds_per_step](const TilePos& cell) {
             if (cell == from) {
@@ -93,15 +92,14 @@ namespace bomberman::logic::ai {
             // Manhattan distance is that step count, so it doubles as the
             // arrival time without threading a depth through the search.
             const float arrival =
-                static_cast<float>(manhattan_distance(from, cell)) * seconds_per_step
-                + arrival_margin_seconds;
+                static_cast<float>(manhattan_distance(from, cell)) * seconds_per_step + arrival_margin_seconds;
             return danger.safe_for(cell, arrival);
         };
     }
 
-    Direction escape_after_bomb(const BotContext &ctx, const TilePos &from) {
-        const DangerMap hypothetical = ctx.danger.with_bomb(
-            ctx.grid, from, ctx.self.blast_radius(), ctx.bomb_fuse_seconds);
+    Direction escape_after_bomb(const BotContext& ctx, const TilePos& from) {
+        const DangerMap hypothetical =
+            ctx.danger.with_bomb(ctx.grid, from, ctx.self.blast_radius(), ctx.bomb_fuse_seconds);
 
         // Judged against the hypothetical map, so the route out is
         // checked against the bomb being dropped *and* against everything
@@ -109,8 +107,7 @@ namespace bomberman::logic::ai {
         // standing there and has not stepped off yet.
         const auto passable = passable_and_survivable(ctx, from, hypothetical);
 
-        const float seconds_per_step =
-            ctx.tiles_per_second > 0.f ? 1.f / ctx.tiles_per_second : 1.f;
+        const float seconds_per_step = ctx.tiles_per_second > 0.f ? 1.f / ctx.tiles_per_second : 1.f;
 
         // An escape is a cell the fire never reaches **and** that the bot
         // can get to before the fuse runs out. Both halves matter, and the
@@ -126,8 +123,7 @@ namespace bomberman::logic::ai {
                 return false;
             }
             const float arrival =
-                static_cast<float>(manhattan_distance(from, cell)) * seconds_per_step
-                + arrival_margin_seconds;
+                static_cast<float>(manhattan_distance(from, cell)) * seconds_per_step + arrival_margin_seconds;
             return arrival < ctx.bomb_fuse_seconds;
         };
 
@@ -140,8 +136,8 @@ namespace bomberman::logic::ai {
         return PathFinder::first_step(ctx.grid, from, *refuge, passable);
     }
 
-    Direction step_towards(const BotContext &ctx, const TilePos &goal) {
+    Direction step_towards(const BotContext& ctx, const TilePos& goal) {
         const auto passable = passable_and_survivable(ctx, ctx.self_cell, ctx.danger);
         return PathFinder::first_step(ctx.grid, ctx.self_cell, goal, passable);
     }
-}
+} // namespace bomberman::logic::ai

@@ -6,7 +6,7 @@
  * Disclaimer:
  *   This file is part of Bomberman.
  *   Unauthorized use, reproduction, or distribution is prohibited.
-***************************************************************/
+ ***************************************************************/
 #ifndef BOMBERMAN_LOGIC_DANGERMAP_H
 #define BOMBERMAN_LOGIC_DANGERMAP_H
 
@@ -58,8 +58,7 @@ namespace bomberman::logic::ai {
          * @param bombs Every bomb currently ticking.
          * @param explosions Every tile currently on fire.
          */
-        void rebuild(const TileGrid& grid,
-                     const std::vector<std::shared_ptr<Bomb>>& bombs,
+        void rebuild(const TileGrid& grid, const std::vector<std::shared_ptr<Bomb>>& bombs,
                      const std::vector<std::shared_ptr<Explosion>>& explosions);
 
         /**
@@ -70,8 +69,8 @@ namespace bomberman::logic::ai {
          * question a Bomberman AI asks, and the one whose absence makes a
          * bot look suicidal rather than merely bad.
          */
-        [[nodiscard]] DangerMap with_bomb(const TileGrid& grid, const TilePos& cell,
-                                          unsigned int radius, float fuse_seconds) const;
+        [[nodiscard]] DangerMap with_bomb(const TileGrid& grid, const TilePos& cell, unsigned int radius,
+                                          float fuse_seconds) const;
 
         /// @brief Seconds until this cell is on fire; `never` if it is not.
         [[nodiscard]] float seconds_until_blast(const TilePos& cell) const;
@@ -89,8 +88,7 @@ namespace bomberman::logic::ai {
         [[nodiscard]] bool safe_for(const TilePos& cell, float seconds) const;
 
     private:
-        void add_bomb(const TileGrid& grid, const TilePos& cell,
-                      unsigned int radius, float fuse_seconds);
+        void add_bomb(const TileGrid& grid, const TilePos& cell, unsigned int radius, float fuse_seconds);
 
         void mark(const TilePos& cell, float seconds);
 
@@ -101,6 +99,6 @@ namespace bomberman::logic::ai {
         int columns_ = 0;
         std::vector<float> seconds_; ///< row-major, `never` where safe
     };
-}
+} // namespace bomberman::logic::ai
 
-#endif //BOMBERMAN_LOGIC_DANGERMAP_H
+#endif // BOMBERMAN_LOGIC_DANGERMAP_H

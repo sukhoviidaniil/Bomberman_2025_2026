@@ -6,7 +6,7 @@
  * Disclaimer:
  *   This file is part of Bomberman.
  *   Unauthorized use, reproduction, or distribution is prohibited.
-***************************************************************/
+ ***************************************************************/
 #ifndef BOMBERMAN_VIEW_STATES_H
 #define BOMBERMAN_VIEW_STATES_H
 
@@ -144,6 +144,6 @@ namespace bomberman::view {
         UiScene scene_;
         MenuNav nav_;
     };
-}
+} // namespace bomberman::view
 
-#endif //BOMBERMAN_VIEW_STATES_H
+#endif // BOMBERMAN_VIEW_STATES_H

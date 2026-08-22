@@ -6,7 +6,7 @@
  * Disclaimer:
  *   This file is part of Bomberman.
  *   Unauthorized use, reproduction, or distribution is prohibited.
-***************************************************************/
+ ***************************************************************/
 #ifndef BOMBERMAN_VIEW_GAME_H
 #define BOMBERMAN_VIEW_GAME_H
 
@@ -111,6 +111,6 @@ namespace bomberman::view {
 
         bool window_open_ = true;
     };
-}
+} // namespace bomberman::view
 
-#endif //BOMBERMAN_VIEW_GAME_H
+#endif // BOMBERMAN_VIEW_GAME_H

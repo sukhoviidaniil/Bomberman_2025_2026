@@ -6,7 +6,7 @@
  * Disclaimer:
  *   This file is part of Bomberman.
  *   Unauthorized use, reproduction, or distribution is prohibited.
-***************************************************************/
+ ***************************************************************/
 
 #include "bomberman/logic/ScoreBoard.h"
 
@@ -18,7 +18,7 @@
 
 namespace bomberman::logic {
 
-    void ScoreBoard::load(const std::string &filepath) {
+    void ScoreBoard::load(const std::string& filepath) {
         entries_.clear();
 
         if (!std::filesystem::exists(filepath)) {
@@ -45,7 +45,7 @@ namespace bomberman::logic {
         }
     }
 
-    void ScoreBoard::save(const std::string &filepath) const {
+    void ScoreBoard::save(const std::string& filepath) const {
         nlohmann::json j = nlohmann::json::array();
         for (const ScoreEntry& entry : entries_) {
             nlohmann::json node = nlohmann::json::object();
@@ -61,11 +61,10 @@ namespace bomberman::logic {
     }
 
     bool ScoreBoard::qualifies(const int points) const {
-        return entries_.size() < capacity
-            || points > entries_.back().points;
+        return entries_.size() < capacity || points > entries_.back().points;
     }
 
-    bool ScoreBoard::submit(const ScoreEntry &entry) {
+    bool ScoreBoard::submit(const ScoreEntry& entry) {
         if (!qualifies(entry.points)) {
             return false;
         }
@@ -79,5 +78,7 @@ namespace bomberman::logic {
         return true;
     }
 
-    const std::vector<ScoreEntry> & ScoreBoard::entries() const { return entries_; }
-}
+    const std::vector<ScoreEntry>& ScoreBoard::entries() const {
+        return entries_;
+    }
+} // namespace bomberman::logic

@@ -6,7 +6,7 @@
  * Disclaimer:
  *   This file is part of Bomberman.
  *   Unauthorized use, reproduction, or distribution is prohibited.
-***************************************************************/
+ ***************************************************************/
 #ifndef BOMBERMAN_LOGIC_GAMEEVENTS_H
 #define BOMBERMAN_LOGIC_GAMEEVENTS_H
 
@@ -28,11 +28,8 @@ namespace bomberman::logic {
     };
 
     /// @brief Distinguishes the human player from the three bots.
-    enum class CharacterKind {
-        Player,
-        Bot
-    };
-}
+    enum class CharacterKind { Player, Bot };
+} // namespace bomberman::logic
 
 /**
  * @file
@@ -87,7 +84,7 @@ namespace bomberman::logic::entity_events {
     struct FuseCritical {
         static constexpr sif::event::EventMask mask = sif::event::EventMask::Program;
     };
-}
+} // namespace bomberman::logic::entity_events
 
 namespace bomberman::logic::game_events {
 
@@ -136,6 +133,6 @@ namespace bomberman::logic::game_events {
         static constexpr sif::event::EventMask mask = sif::event::EventMask::Program;
         bool player_won = false;
     };
-}
+} // namespace bomberman::logic::game_events
 
-#endif //BOMBERMAN_LOGIC_GAMEEVENTS_H
+#endif // BOMBERMAN_LOGIC_GAMEEVENTS_H

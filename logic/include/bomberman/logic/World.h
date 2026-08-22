@@ -6,7 +6,7 @@
  * Disclaimer:
  *   This file is part of Bomberman.
  *   Unauthorized use, reproduction, or distribution is prohibited.
-***************************************************************/
+ ***************************************************************/
 #ifndef BOMBERMAN_LOGIC_WORLD_H
 #define BOMBERMAN_LOGIC_WORLD_H
 
@@ -14,9 +14,9 @@
 #include <vector>
 
 #include "bomberman/logic/Config.h"
+#include "bomberman/logic/IEntityFactory.h"
 #include "bomberman/logic/ai/BotBrain.h"
 #include "bomberman/logic/ai/DangerMap.h"
-#include "bomberman/logic/IEntityFactory.h"
 #include "bomberman/logic/grid/TileGrid.h"
 
 #include "sif/event/Event_Bus.h"
@@ -44,11 +44,8 @@ namespace bomberman::logic {
          * @param round Speeds, timings and how many bots to spawn.
          * @param power_ups Drop odds, caps and what each pick-up is worth.
          */
-        World(std::shared_ptr<sif::event::Event_Bus> bus,
-              std::shared_ptr<IEntityFactory> factory,
-              MapConfig map = {},
-              RoundConfig round = {},
-              PowerUpRules power_ups = {});
+        World(std::shared_ptr<sif::event::Event_Bus> bus, std::shared_ptr<IEntityFactory> factory, MapConfig map = {},
+              RoundConfig round = {}, PowerUpRules power_ups = {});
 
         World(const World&) = delete;
         World& operator=(const World&) = delete;
@@ -154,6 +151,6 @@ namespace bomberman::logic {
         bool round_over_ = false;
         bool player_won_ = false;
     };
-}
+} // namespace bomberman::logic
 
-#endif //BOMBERMAN_LOGIC_WORLD_H
+#endif // BOMBERMAN_LOGIC_WORLD_H

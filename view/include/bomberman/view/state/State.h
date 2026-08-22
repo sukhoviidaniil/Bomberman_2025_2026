@@ -6,7 +6,7 @@
  * Disclaimer:
  *   This file is part of Bomberman.
  *   Unauthorized use, reproduction, or distribution is prohibited.
-***************************************************************/
+ ***************************************************************/
 #ifndef BOMBERMAN_VIEW_STATE_H
 #define BOMBERMAN_VIEW_STATE_H
 
@@ -84,8 +84,7 @@ namespace bomberman::view {
          */
         virtual void on_text(StateManager& manager, char32_t character);
 
-        virtual void append_render_items(sif::rnd::RenderFrame& frame,
-                                         const DrawContext& ctx) const = 0;
+        virtual void append_render_items(sif::rnd::RenderFrame& frame, const DrawContext& ctx) const = 0;
 
         /**
          * @brief True if the state below should also be drawn.
@@ -98,6 +97,6 @@ namespace bomberman::view {
     protected:
         State() = default;
     };
-}
+} // namespace bomberman::view
 
-#endif //BOMBERMAN_VIEW_STATE_H
+#endif // BOMBERMAN_VIEW_STATE_H

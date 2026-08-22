@@ -6,7 +6,7 @@
  * Disclaimer:
  *   This file is part of Bomberman.
  *   Unauthorized use, reproduction, or distribution is prohibited.
-***************************************************************/
+ ***************************************************************/
 #ifndef BOMBERMAN_LOGIC_PATHFINDER_H
 #define BOMBERMAN_LOGIC_PATHFINDER_H
 
@@ -56,9 +56,8 @@ namespace bomberman::logic::ai {
          *
          * @return Empty if no path exists. The first element is `from`.
          */
-        [[nodiscard]] static std::vector<TilePos> find_path(
-            const TileGrid& grid, const TilePos& from, const TilePos& to,
-            const CellPredicate& passable);
+        [[nodiscard]] static std::vector<TilePos> find_path(const TileGrid& grid, const TilePos& from,
+                                                            const TilePos& to, const CellPredicate& passable);
 
         /**
          * @brief First step of the shortest path, as a direction.
@@ -67,9 +66,8 @@ namespace bomberman::logic::ai {
          * reached - never a "best guess", because a bot that guesses is
          * indistinguishable from a bot that is broken.
          */
-        [[nodiscard]] static Direction first_step(
-            const TileGrid& grid, const TilePos& from, const TilePos& to,
-            const CellPredicate& passable);
+        [[nodiscard]] static Direction first_step(const TileGrid& grid, const TilePos& from, const TilePos& to,
+                                                  const CellPredicate& passable);
 
         /**
          * @brief Nearest cell satisfying `goal`, searched breadth-first.
@@ -80,11 +78,10 @@ namespace bomberman::logic::ai {
          *
          * @param max_depth Search cut-off in steps; 0 means unlimited.
          */
-        [[nodiscard]] static std::optional<TilePos> find_nearest(
-            const TileGrid& grid, const TilePos& from,
-            const CellPredicate& passable, const CellPredicate& goal,
-            int max_depth = 0);
+        [[nodiscard]] static std::optional<TilePos> find_nearest(const TileGrid& grid, const TilePos& from,
+                                                                 const CellPredicate& passable,
+                                                                 const CellPredicate& goal, int max_depth = 0);
     };
-}
+} // namespace bomberman::logic::ai
 
-#endif //BOMBERMAN_LOGIC_PATHFINDER_H
+#endif // BOMBERMAN_LOGIC_PATHFINDER_H

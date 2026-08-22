@@ -6,7 +6,7 @@
  * Disclaimer:
  *   This file is part of Bomberman.
  *   Unauthorized use, reproduction, or distribution is prohibited.
-***************************************************************/
+ ***************************************************************/
 
 #include "bomberman/view/EntityView.h"
 
@@ -19,8 +19,7 @@ namespace bomberman::view {
 
     EntityView::~EntityView() = default;
 
-    EntityView::EntityView(const std::shared_ptr<logic::Entity> &model) : model_(model) {
-    }
+    EntityView::EntityView(const std::shared_ptr<logic::Entity>& model) : model_(model) {}
 
     bool EntityView::orphaned() const {
         return model_.expired();
@@ -30,10 +29,10 @@ namespace bomberman::view {
         elapsed_ += dt;
     }
 
-    void EntityView::append_animation(sif::rnd::RenderFrame &frame, const sif::rnd::Camera &camera,
-                                      const sif::asset::AssetHandle<sif::asset::PrimitiveAnimation> &animation,
-                                      const float elapsed, const float width_scale,
-                                      const bool anchor_bottom, const sif::intrnl::Color tint) const {
+    void EntityView::append_animation(sif::rnd::RenderFrame& frame, const sif::rnd::Camera& camera,
+                                      const sif::asset::AssetHandle<sif::asset::PrimitiveAnimation>& animation,
+                                      const float elapsed, const float width_scale, const bool anchor_bottom,
+                                      const sif::intrnl::Color tint) const {
         const auto model = model_.lock();
         if (model == nullptr || !animation.ready()) {
             return;
@@ -57,9 +56,8 @@ namespace bomberman::view {
         const float height = width * (src.height / src.width);
 
         const float left = box.center.x - width * 0.5f;
-        const float top = anchor_bottom
-            ? box.bottom() - height          // feet on the tile
-            : box.center.y - height * 0.5f;  // centred, for bombs and fire
+        const float top = anchor_bottom ? box.bottom() - height         // feet on the tile
+                                        : box.center.y - height * 0.5f; // centred, for bombs and fire
 
         auto item = std::make_unique<sif::rnd::Sprite>();
         item->rect = camera.world_to_screen(sif::intrnl::Rect(left, top, width, height));
@@ -71,9 +69,9 @@ namespace bomberman::view {
         frame.temp_items.push_back(std::move(item));
     }
 
-    void EntityView::append_sprite(sif::rnd::RenderFrame &frame, const sif::rnd::Camera &camera,
-                                   const sif::asset::AssetHandle<void> &sprite,
-                                   const float width_scale, const sif::intrnl::Color tint) const {
+    void EntityView::append_sprite(sif::rnd::RenderFrame& frame, const sif::rnd::Camera& camera,
+                                   const sif::asset::AssetHandle<void>& sprite, const float width_scale,
+                                   const sif::intrnl::Color tint) const {
         const auto model = model_.lock();
         if (model == nullptr || !sprite.ready()) {
             return;
@@ -115,9 +113,9 @@ namespace bomberman::view {
         }
     }
 
-    void ViewRegistry::append_render_items(sif::rnd::RenderFrame &frame, const sif::rnd::Camera &camera) const {
+    void ViewRegistry::append_render_items(sif::rnd::RenderFrame& frame, const sif::rnd::Camera& camera) const {
         for (const auto& view : views_) {
             view->append_render_items(frame, camera);
         }
     }
-}
+} // namespace bomberman::view

@@ -6,7 +6,7 @@
  * Disclaimer:
  *   This file is part of Bomberman.
  *   Unauthorized use, reproduction, or distribution is prohibited.
-***************************************************************/
+ ***************************************************************/
 #ifndef BOMBERMAN_LOGIC_EXPLOSION_H
 #define BOMBERMAN_LOGIC_EXPLOSION_H
 
@@ -25,8 +25,7 @@ namespace bomberman::logic {
      */
     class Explosion : public Entity {
     public:
-        Explosion(sif::math::Point2 position, float size, TilePos cell,
-                  float lifetime_seconds, bool from_player);
+        Explosion(sif::math::Point2 position, float size, TilePos cell, float lifetime_seconds, bool from_player);
 
         void update(float dt) override;
 
@@ -44,6 +43,6 @@ namespace bomberman::logic {
         float elapsed_ = 0.f;
         bool from_player_;
     };
-}
+} // namespace bomberman::logic
 
-#endif //BOMBERMAN_LOGIC_EXPLOSION_H
+#endif // BOMBERMAN_LOGIC_EXPLOSION_H

@@ -6,7 +6,7 @@
  * Disclaimer:
  *   This file is part of Bomberman.
  *   Unauthorized use, reproduction, or distribution is prohibited.
-***************************************************************/
+ ***************************************************************/
 #ifndef BOMBERMAN_LOGIC_BOTBRAIN_H
 #define BOMBERMAN_LOGIC_BOTBRAIN_H
 
@@ -79,6 +79,6 @@ namespace bomberman::logic::ai {
         BotPersonality personality_;
         std::vector<std::unique_ptr<BotBehaviour>> behaviours_;
     };
-}
+} // namespace bomberman::logic::ai
 
-#endif //BOMBERMAN_LOGIC_BOTBRAIN_H
+#endif // BOMBERMAN_LOGIC_BOTBRAIN_H

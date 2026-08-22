@@ -6,7 +6,7 @@
  * Disclaimer:
  *   This file is part of Bomberman.
  *   Unauthorized use, reproduction, or distribution is prohibited.
-***************************************************************/
+ ***************************************************************/
 
 #include "TestFramework.h"
 
@@ -32,7 +32,7 @@ namespace {
         }
         return false;
     }
-}
+} // namespace
 
 // ---------------------------------------------------------------------
 // Editing
@@ -45,7 +45,7 @@ SIF_TEST(a_new_profile_has_a_usable_default_name) {
 
 SIF_TEST(typing_builds_the_name_one_character_at_a_time) {
     PlayerProfile profile;
-    profile.set_name("");            // refused: see below
+    profile.set_name(""); // refused: see below
     while (!profile.name().empty()) {
         profile.backspace();
     }
@@ -79,7 +79,7 @@ SIF_TEST(unprintable_and_non_ascii_keystrokes_are_ignored) {
 
     profile.append(U'\t');
     profile.append(U'\n');
-    profile.append(U'\u0444');  // beyond the font's glyph set
+    profile.append(U'\u0444'); // beyond the font's glyph set
     SIF_CHECK(profile.name().empty());
 
     profile.append(U'Z');

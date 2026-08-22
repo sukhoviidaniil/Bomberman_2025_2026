@@ -6,7 +6,7 @@
  * Disclaimer:
  *   This file is part of Bomberman.
  *   Unauthorized use, reproduction, or distribution is prohibited.
-***************************************************************/
+ ***************************************************************/
 #ifndef BOMBERMAN_VIEW_AUDIODIRECTOR_H
 #define BOMBERMAN_VIEW_AUDIODIRECTOR_H
 
@@ -42,10 +42,8 @@ namespace bomberman::view {
          * @param assets Where the sound handles come from.
          * @param config Volumes, and whether sound is on at all.
          */
-        AudioDirector(const std::shared_ptr<sif::event::Event_Bus>& world_bus,
-                      sif::audio::AudioPlayer& audio,
-                      const GameAssets& assets,
-                      const logic::AudioConfig& config);
+        AudioDirector(const std::shared_ptr<sif::event::Event_Bus>& world_bus, sif::audio::AudioPlayer& audio,
+                      const GameAssets& assets, const logic::AudioConfig& config);
 
         /// @brief Plays a one-shot sound by asset name, honouring the volume settings.
         void play(const std::string& asset_name, float volume_scale = 1.f) const;
@@ -55,6 +53,6 @@ namespace bomberman::view {
         const GameAssets& assets_;
         logic::AudioConfig config_;
     };
-}
+} // namespace bomberman::view
 
-#endif //BOMBERMAN_VIEW_AUDIODIRECTOR_H
+#endif // BOMBERMAN_VIEW_AUDIODIRECTOR_H

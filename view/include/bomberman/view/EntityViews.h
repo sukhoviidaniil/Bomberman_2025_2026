@@ -6,7 +6,7 @@
  * Disclaimer:
  *   This file is part of Bomberman.
  *   Unauthorized use, reproduction, or distribution is prohibited.
-***************************************************************/
+ ***************************************************************/
 #ifndef BOMBERMAN_VIEW_ENTITYVIEWS_H
 #define BOMBERMAN_VIEW_ENTITYVIEWS_H
 
@@ -42,8 +42,7 @@ namespace bomberman::view {
      */
     class CharacterView final : public EntityView {
     public:
-        CharacterView(const std::shared_ptr<logic::Character>& model,
-                      const GameAssets& assets,
+        CharacterView(const std::shared_ptr<logic::Character>& model, const GameAssets& assets,
                       sif::intrnl::Color tint);
 
         void append_render_items(sif::rnd::RenderFrame& frame, const sif::rnd::Camera& camera) const override;
@@ -97,6 +96,6 @@ namespace bomberman::view {
     private:
         sif::asset::AssetHandle<void> sprite_;
     };
-}
+} // namespace bomberman::view
 
-#endif //BOMBERMAN_VIEW_ENTITYVIEWS_H
+#endif // BOMBERMAN_VIEW_ENTITYVIEWS_H

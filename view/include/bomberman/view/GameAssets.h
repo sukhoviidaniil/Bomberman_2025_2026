@@ -6,7 +6,7 @@
  * Disclaimer:
  *   This file is part of Bomberman.
  *   Unauthorized use, reproduction, or distribution is prohibited.
-***************************************************************/
+ ***************************************************************/
 #ifndef BOMBERMAN_VIEW_GAMEASSETS_H
 #define BOMBERMAN_VIEW_GAMEASSETS_H
 
@@ -76,6 +76,6 @@ namespace bomberman::view {
 
         std::unordered_map<std::string, sif::intrnl::GUID> guids_;
     };
-}
+} // namespace bomberman::view
 
-#endif //BOMBERMAN_VIEW_GAMEASSETS_H
+#endif // BOMBERMAN_VIEW_GAMEASSETS_H

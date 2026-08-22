@@ -6,7 +6,7 @@
  * Disclaimer:
  *   This file is part of Bomberman.
  *   Unauthorized use, reproduction, or distribution is prohibited.
-***************************************************************/
+ ***************************************************************/
 
 #include "TestFramework.h"
 
@@ -35,10 +35,10 @@ namespace {
         return grid;
     }
 
-    std::shared_ptr<Bomb> make_bomb(const TileGrid& grid, const TilePos cell,
-                                    const unsigned int radius, const float fuse) {
-        return std::make_shared<Bomb>(grid.get_center(cell), grid.tile_size(), cell,
-                                      std::weak_ptr<Character>{}, radius, fuse);
+    std::shared_ptr<Bomb> make_bomb(const TileGrid& grid, const TilePos cell, const unsigned int radius,
+                                    const float fuse) {
+        return std::make_shared<Bomb>(grid.get_center(cell), grid.tile_size(), cell, std::weak_ptr<Character>{}, radius,
+                                      fuse);
     }
 
     /// A context over a grid, one bot and an explicit danger map.
@@ -51,10 +51,9 @@ namespace {
         std::vector<std::shared_ptr<Bomb>> bombs;
         std::vector<std::shared_ptr<Explosion>> explosions;
 
-        Fixture(TileGrid g, const TilePos start)
-            : grid(std::move(g)) {
-            self = std::make_shared<Character>(
-                "Bot", grid.get_center(start), grid.tile_size() * 0.85f, 0.45f, CharacterKind::Bot);
+        Fixture(TileGrid g, const TilePos start) : grid(std::move(g)) {
+            self = std::make_shared<Character>("Bot", grid.get_center(start), grid.tile_size() * 0.85f, 0.45f,
+                                               CharacterKind::Bot);
             characters.push_back(self);
         }
 
@@ -62,21 +61,24 @@ namespace {
 
         [[nodiscard]] BotContext context() const {
             const auto cell = grid.get_TilePos(self->position());
-            return BotContext{
-                grid, danger, *self, cell.value_or(TilePos{0, 0}),
-                characters, power_ups,
-                [this](const TilePos& c) {
-                    for (const auto& b : bombs) {
-                        if (b->cell() == c) return true;
-                    }
-                    return false;
-                },
-                2.f,
-                grid.tile_size() > 0.f ? self->speed() / grid.tile_size() : 1.f
-            };
+            return BotContext{grid,
+                              danger,
+                              *self,
+                              cell.value_or(TilePos{0, 0}),
+                              characters,
+                              power_ups,
+                              [this](const TilePos& c) {
+                                  for (const auto& b : bombs) {
+                                      if (b->cell() == c)
+                                          return true;
+                                  }
+                                  return false;
+                              },
+                              2.f,
+                              grid.tile_size() > 0.f ? self->speed() / grid.tile_size() : 1.f};
         }
     };
-}
+} // namespace
 
 // ---------------------------------------------------------------------
 // DangerMap - the model every behaviour depends on
@@ -88,10 +90,10 @@ SIF_TEST(a_bomb_endangers_its_own_cell_and_a_cross_of_its_radius) {
     f.rebuild();
 
     SIF_CHECK(!f.danger.safe({3, 3}));
-    SIF_CHECK(!f.danger.safe({1, 3}));   // two up
-    SIF_CHECK(!f.danger.safe({3, 5}));   // two right
-    SIF_CHECK(f.danger.safe({0, 3}));    // three up: out of range
-    SIF_CHECK(f.danger.safe({2, 2}));    // diagonal: never in a cross
+    SIF_CHECK(!f.danger.safe({1, 3})); // two up
+    SIF_CHECK(!f.danger.safe({3, 5})); // two right
+    SIF_CHECK(f.danger.safe({0, 3}));  // three up: out of range
+    SIF_CHECK(f.danger.safe({2, 2}));  // diagonal: never in a cross
 }
 
 SIF_TEST(an_indestructible_wall_stops_the_blast_short) {
@@ -101,7 +103,7 @@ SIF_TEST(an_indestructible_wall_stops_the_blast_short) {
     f.rebuild();
 
     SIF_CHECK(!f.danger.safe({3, 3}));
-    SIF_CHECK(f.danger.safe({3, 5}));  // behind the wall
+    SIF_CHECK(f.danger.safe({3, 5})); // behind the wall
     SIF_CHECK(f.danger.safe({3, 6}));
     SIF_CHECK(!f.danger.safe({3, 2})); // the other direction is unaffected
 }
@@ -125,8 +127,8 @@ SIF_TEST(the_danger_map_reports_when_not_just_whether) {
     f.rebuild();
 
     SIF_CHECK(f.danger.seconds_until_blast({2, 2}) == 1.5f);
-    SIF_CHECK(f.danger.safe_for({2, 2}, 1.0f));   // still fine for a second
-    SIF_CHECK(!f.danger.safe_for({2, 2}, 2.0f));  // not for two
+    SIF_CHECK(f.danger.safe_for({2, 2}, 1.0f));  // still fine for a second
+    SIF_CHECK(!f.danger.safe_for({2, 2}, 2.0f)); // not for two
     SIF_CHECK(f.danger.seconds_until_blast({0, 0}) == DangerMap::never);
 }
 
@@ -188,12 +190,7 @@ SIF_TEST(a_bot_next_to_a_lit_bomb_survives_a_real_round) {
     sif::intrnl::Random::instance().seed(4242u);
 
     MapConfig map;
-    map.layout = {
-        "1..........",
-        "...........",
-        "...........",
-        "..........2"
-    };
+    map.layout = {"1..........", "...........", "...........", "..........2"};
     RoundConfig round;
     round.bot_count = 1;
 
@@ -294,8 +291,8 @@ SIF_TEST(a_bigger_blast_radius_makes_a_bot_need_more_room) {
 
 SIF_TEST(a_bot_walks_towards_a_nearby_power_up) {
     Fixture f(open_grid(1, 7), {0, 0});
-    f.power_ups.push_back(std::make_shared<PowerUp>(
-        f.grid.get_center({0, 4}), f.grid.tile_size() * 0.7f, TilePos{0, 4}, PowerUpKind::Fire));
+    f.power_ups.push_back(std::make_shared<PowerUp>(f.grid.get_center({0, 4}), f.grid.tile_size() * 0.7f, TilePos{0, 4},
+                                                    PowerUpKind::Fire));
     f.rebuild();
 
     const CollectPowerUpBehaviour behaviour;
@@ -310,8 +307,8 @@ SIF_TEST(a_bot_walks_towards_a_nearby_power_up) {
 
 SIF_TEST(a_bot_ignores_a_power_up_beyond_its_search_radius) {
     Fixture f(open_grid(1, 20), {0, 0});
-    f.power_ups.push_back(std::make_shared<PowerUp>(
-        f.grid.get_center({0, 18}), f.grid.tile_size() * 0.7f, TilePos{0, 18}, PowerUpKind::Fire));
+    f.power_ups.push_back(std::make_shared<PowerUp>(f.grid.get_center({0, 18}), f.grid.tile_size() * 0.7f,
+                                                    TilePos{0, 18}, PowerUpKind::Fire));
     f.rebuild();
 
     const CollectPowerUpBehaviour behaviour(4);
@@ -321,8 +318,8 @@ SIF_TEST(a_bot_ignores_a_power_up_beyond_its_search_radius) {
 SIF_TEST(a_bot_bombs_an_enemy_that_is_in_line_and_in_range) {
     Fixture f(open_grid(1, 9), {0, 2});
 
-    auto enemy = std::make_shared<Character>(
-        "Player", f.grid.get_center({0, 3}), f.grid.tile_size() * 0.85f, 0.45f, CharacterKind::Player);
+    auto enemy = std::make_shared<Character>("Player", f.grid.get_center({0, 3}), f.grid.tile_size() * 0.85f, 0.45f,
+                                             CharacterKind::Player);
     f.characters.push_back(enemy);
     f.rebuild();
 
@@ -341,8 +338,8 @@ SIF_TEST(a_bot_does_not_bomb_an_enemy_behind_a_wall) {
     grid.set_tile({0, 3}, Tile::Indestructible);
 
     Fixture f(std::move(grid), {0, 2});
-    auto enemy = std::make_shared<Character>(
-        "Player", f.grid.get_center({0, 4}), f.grid.tile_size() * 0.85f, 0.45f, CharacterKind::Player);
+    auto enemy = std::make_shared<Character>("Player", f.grid.get_center({0, 4}), f.grid.tile_size() * 0.85f, 0.45f,
+                                             CharacterKind::Player);
     f.characters.push_back(enemy);
     f.rebuild();
 
@@ -362,8 +359,8 @@ SIF_TEST(survival_outranks_every_other_goal) {
     // A power-up one step away, and a bomb about to go off underfoot. A
     // bot that grabs the power-up here is the classic broken-AI bug.
     Fixture f(open_grid(1, 9), {0, 4});
-    f.power_ups.push_back(std::make_shared<PowerUp>(
-        f.grid.get_center({0, 5}), f.grid.tile_size() * 0.7f, TilePos{0, 5}, PowerUpKind::Fire));
+    f.power_ups.push_back(std::make_shared<PowerUp>(f.grid.get_center({0, 5}), f.grid.tile_size() * 0.7f, TilePos{0, 5},
+                                                    PowerUpKind::Fire));
     f.bombs.push_back(make_bomb(f.grid, {0, 4}, 1, 1.f));
     f.rebuild();
 
@@ -374,9 +371,8 @@ SIF_TEST(survival_outranks_every_other_goal) {
 }
 
 SIF_TEST(every_personality_puts_survival_first_and_wandering_last) {
-    for (const BotPersonality personality : {BotPersonality::Balanced,
-                                             BotPersonality::Aggressive,
-                                             BotPersonality::Collector}) {
+    for (const BotPersonality personality :
+         {BotPersonality::Balanced, BotPersonality::Aggressive, BotPersonality::Collector}) {
         const BotBrain brain(personality);
         const std::vector<std::string> order = brain.priorities();
 
@@ -491,8 +487,8 @@ SIF_TEST(fire_already_on_the_ground_counts_as_danger) {
     // cells looked safe while the fire was still burning there, and every
     // bot walked into it. Bombs are the future; explosions are the present.
     Fixture f(open_grid(5, 5), {2, 0});
-    f.explosions.push_back(std::make_shared<Explosion>(
-        f.grid.get_center({2, 2}), f.grid.tile_size(), TilePos{2, 2}, 0.5f, false));
+    f.explosions.push_back(
+        std::make_shared<Explosion>(f.grid.get_center({2, 2}), f.grid.tile_size(), TilePos{2, 2}, 0.5f, false));
     f.rebuild();
 
     SIF_CHECK(!f.danger.safe({2, 2}));
@@ -502,10 +498,10 @@ SIF_TEST(fire_already_on_the_ground_counts_as_danger) {
 
 SIF_TEST(a_bot_will_not_walk_through_fire_to_reach_a_power_up) {
     Fixture f(open_grid(1, 7), {0, 0});
-    f.power_ups.push_back(std::make_shared<PowerUp>(
-        f.grid.get_center({0, 4}), f.grid.tile_size() * 0.7f, TilePos{0, 4}, PowerUpKind::Fire));
-    f.explosions.push_back(std::make_shared<Explosion>(
-        f.grid.get_center({0, 2}), f.grid.tile_size(), TilePos{0, 2}, 0.5f, false));
+    f.power_ups.push_back(std::make_shared<PowerUp>(f.grid.get_center({0, 4}), f.grid.tile_size() * 0.7f, TilePos{0, 4},
+                                                    PowerUpKind::Fire));
+    f.explosions.push_back(
+        std::make_shared<Explosion>(f.grid.get_center({0, 2}), f.grid.tile_size(), TilePos{0, 2}, 0.5f, false));
     f.rebuild();
 
     const CollectPowerUpBehaviour behaviour;

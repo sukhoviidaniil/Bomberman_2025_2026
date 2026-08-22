@@ -6,14 +6,14 @@
  * Disclaimer:
  *   This file is part of Bomberman.
  *   Unauthorized use, reproduction, or distribution is prohibited.
-***************************************************************/
+ ***************************************************************/
 #ifndef BOMBERMAN_LOGIC_TILEGRID_H
 #define BOMBERMAN_LOGIC_TILEGRID_H
 
 #include <cstddef>
 #include <cstdint>
-#include <string>
 #include <optional>
+#include <string>
 #include <vector>
 
 #include "bomberman/logic/Direction.h"
@@ -168,12 +168,12 @@ namespace bomberman::logic {
         std::size_t rows_ = 0;
         std::size_t columns_ = 0;
 
-        float tile_size_ = 0.f;             ///< Edge length in world units
+        float tile_size_ = 0.f;              ///< Edge length in world units
         sif::math::Point2 origin_{0.f, 0.f}; ///< World position of cell (0, 0)'s corner
 
-        std::vector<Tile> tiles_;   ///< row-major, rows_ * columns_ entries
+        std::vector<Tile> tiles_;     ///< row-major, rows_ * columns_ entries
         std::vector<TilePos> spawns_; ///< Where characters appear
     };
-}
+} // namespace bomberman::logic
 
-#endif //BOMBERMAN_LOGIC_TILEGRID_H
+#endif // BOMBERMAN_LOGIC_TILEGRID_H

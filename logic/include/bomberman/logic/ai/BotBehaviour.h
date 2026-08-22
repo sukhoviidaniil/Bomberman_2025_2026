@@ -6,7 +6,7 @@
  * Disclaimer:
  *   This file is part of Bomberman.
  *   Unauthorized use, reproduction, or distribution is prohibited.
-***************************************************************/
+ ***************************************************************/
 #ifndef BOMBERMAN_LOGIC_BOTBEHAVIOUR_H
 #define BOMBERMAN_LOGIC_BOTBEHAVIOUR_H
 
@@ -154,8 +154,8 @@ namespace bomberman::logic::ai {
      * @param danger Which map to judge against - the real one, or the
      * hypothetical one that includes a bomb the bot is considering.
      */
-    [[nodiscard]] std::function<bool(const TilePos&)> passable_and_survivable(
-        const BotContext& ctx, const TilePos& from, const DangerMap& danger);
+    [[nodiscard]] std::function<bool(const TilePos&)>
+    passable_and_survivable(const BotContext& ctx, const TilePos& from, const DangerMap& danger);
 
     /**
      * @brief First step of the safest short path towards a goal cell.
@@ -167,6 +167,6 @@ namespace bomberman::logic::ai {
      * @return Direction::None when no acceptable path exists.
      */
     [[nodiscard]] Direction step_towards(const BotContext& ctx, const TilePos& goal);
-}
+} // namespace bomberman::logic::ai
 
-#endif //BOMBERMAN_LOGIC_BOTBEHAVIOUR_H
+#endif // BOMBERMAN_LOGIC_BOTBEHAVIOUR_H

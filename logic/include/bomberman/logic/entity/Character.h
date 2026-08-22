@@ -6,7 +6,7 @@
  * Disclaimer:
  *   This file is part of Bomberman.
  *   Unauthorized use, reproduction, or distribution is prohibited.
-***************************************************************/
+ ***************************************************************/
 #ifndef BOMBERMAN_LOGIC_CHARACTER_H
 #define BOMBERMAN_LOGIC_CHARACTER_H
 
@@ -100,7 +100,6 @@ namespace bomberman::logic {
         [[nodiscard]] bool can_enter(const TilePos& cell, const TileGrid& grid) const override;
 
     private:
-
         CharacterKind kind_;
         bool alive_ = true;
 
@@ -114,6 +113,6 @@ namespace bomberman::logic {
         std::function<bool(const TilePos&)> obstacle_check_;
         PowerUpRules rules_;
     };
-}
+} // namespace bomberman::logic
 
-#endif //BOMBERMAN_LOGIC_CHARACTER_H
+#endif // BOMBERMAN_LOGIC_CHARACTER_H

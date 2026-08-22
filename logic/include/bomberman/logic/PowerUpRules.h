@@ -6,7 +6,7 @@
  * Disclaimer:
  *   This file is part of Bomberman.
  *   Unauthorized use, reproduction, or distribution is prohibited.
-***************************************************************/
+ ***************************************************************/
 #ifndef BOMBERMAN_LOGIC_POWERUPRULES_H
 #define BOMBERMAN_LOGIC_POWERUPRULES_H
 
@@ -73,6 +73,6 @@ namespace bomberman::logic {
          */
         void validate() const;
     };
-}
+} // namespace bomberman::logic
 
-#endif //BOMBERMAN_LOGIC_POWERUPRULES_H
+#endif // BOMBERMAN_LOGIC_POWERUPRULES_H

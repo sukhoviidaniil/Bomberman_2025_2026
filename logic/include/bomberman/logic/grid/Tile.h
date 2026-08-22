@@ -6,7 +6,7 @@
  * Disclaimer:
  *   This file is part of Bomberman.
  *   Unauthorized use, reproduction, or distribution is prohibited.
-***************************************************************/
+ ***************************************************************/
 #ifndef BOMBERMAN_LOGIC_TILE_H
 #define BOMBERMAN_LOGIC_TILE_H
 
@@ -40,6 +40,6 @@ namespace bomberman::logic {
     [[nodiscard]] constexpr bool blocks_blast(const Tile t) {
         return t != Tile::Free;
     }
-}
+} // namespace bomberman::logic
 
-#endif //BOMBERMAN_LOGIC_TILE_H
+#endif // BOMBERMAN_LOGIC_TILE_H

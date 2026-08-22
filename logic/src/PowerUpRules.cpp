@@ -6,7 +6,7 @@
  * Disclaimer:
  *   This file is part of Bomberman.
  *   Unauthorized use, reproduction, or distribution is prohibited.
-***************************************************************/
+ ***************************************************************/
 
 #include "bomberman/logic/PowerUpRules.h"
 
@@ -66,4 +66,4 @@ namespace bomberman::logic {
             throw std::runtime_error("config: power_ups.max_speed must be positive");
         }
     }
-}
+} // namespace bomberman::logic

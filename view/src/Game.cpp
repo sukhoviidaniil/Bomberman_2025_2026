@@ -6,7 +6,7 @@
  * Disclaimer:
  *   This file is part of Bomberman.
  *   Unauthorized use, reproduction, or distribution is prohibited.
-***************************************************************/
+ ***************************************************************/
 
 #include "bomberman/view/Game.h"
 
@@ -29,15 +29,12 @@ namespace bomberman::view {
     namespace {
         /// The arena is square, so letterboxing keeps the tiles square.
         constexpr sif::rnd::AspectPolicy arena_aspect = sif::rnd::AspectPolicy::Fit;
-    }
+    } // namespace
 
     Game::Game(std::string data_dir, logic::GameConfig config)
-        : data_dir_(std::move(data_dir))
-        , bus_(std::make_shared<sif::event::Event_Bus>())
-        , config_(std::move(config))
-        , camera_({static_cast<float>(config_.window.width),
-                   static_cast<float>(config_.window.height)}, arena_aspect)
-        , states_(*this) {
+        : data_dir_(std::move(data_dir)), bus_(std::make_shared<sif::event::Event_Bus>()), config_(std::move(config)),
+          camera_({static_cast<float>(config_.window.width), static_cast<float>(config_.window.height)}, arena_aspect),
+          states_(*this) {
 
         if (!data_dir_.empty() && data_dir_.back() != '/') {
             data_dir_.push_back('/');
@@ -45,13 +42,11 @@ namespace bomberman::view {
         score_board_path_ = data_dir_ + "scoreboard.json";
         profile_path_ = data_dir_ + "player.json";
 
-        const sif::ast::RB_Config render_config{
-            .type = sif::ast::RB_Type::SFML,
-            .window_name = config_.window.title,
-            .window_width = config_.window.width,
-            .window_height = config_.window.height,
-            .fps = config_.window.fps
-        };
+        const sif::ast::RB_Config render_config{.type = sif::ast::RB_Type::SFML,
+                                                .window_name = config_.window.title,
+                                                .window_width = config_.window.width,
+                                                .window_height = config_.window.height,
+                                                .fps = config_.window.fps};
         const sif::ast::EC_Config collector_config{.type = sif::ast::RB_Type::SFML};
 
         sif::backend::Graphics_Factory& factory = sif::backend::Graphics_Factory::instance();
@@ -68,16 +63,13 @@ namespace bomberman::view {
         profile_.load(profile_path_);
 
         track(bus_->subscribe<sif::event::window::Window_Closed>(
-            [this](const sif::event::window::Window_Closed&) {
-                window_open_ = false;
-            }));
+            [this](const sif::event::window::Window_Closed&) { window_open_ = false; }));
 
-        track(bus_->subscribe<sif::event::window::Window_Resized>(
-            [this](const sif::event::window::Window_Resized& e) {
-                // Re-project instead of letting SFML stretch the frame:
-                // the arena stays square whatever the window shape.
-                camera_.set_screen_size({static_cast<float>(e.width), static_cast<float>(e.height)});
-            }));
+        track(bus_->subscribe<sif::event::window::Window_Resized>([this](const sif::event::window::Window_Resized& e) {
+            // Re-project instead of letting SFML stretch the frame:
+            // the arena stays square whatever the window shape.
+            camera_.set_screen_size({static_cast<float>(e.width), static_cast<float>(e.height)});
+        }));
 
         states_.push(std::make_unique<MenuState>());
         states_.flush(); // otherwise the stack is still empty when run() checks it
@@ -99,14 +91,14 @@ namespace bomberman::view {
         assets_ = std::make_unique<GameAssets>();
     }
 
-    void Game::handle_event(const sif::event::EventConcept &ev) {
+    void Game::handle_event(const sif::event::EventConcept& ev) {
         if (has(ev.mask(), sif::event::EventMask::Window)) {
             bus_->emit(ev);
             return;
         }
 
-        if (ev.type() != std::type_index(typeid(sif::event::input::KeyPressed))
-            && ev.type() != std::type_index(typeid(sif::event::input::TextEntered))) {
+        if (ev.type() != std::type_index(typeid(sif::event::input::KeyPressed)) &&
+            ev.type() != std::type_index(typeid(sif::event::input::TextEntered))) {
             return;
         }
 
@@ -157,27 +149,43 @@ namespace bomberman::view {
         sif::asset::AssetRegistry::instance().wait_for_idle();
     }
 
-    sif::audio::AudioPlayer & Game::audio() const { return *audio_; }
-    const sif::rnd::Camera & Game::camera() const { return camera_; }
+    sif::audio::AudioPlayer& Game::audio() const {
+        return *audio_;
+    }
+    const sif::rnd::Camera& Game::camera() const {
+        return camera_;
+    }
     sif::asset::AssetHandle<sif::asset::Font> Game::ui_font() const {
         return assets_->font(assets::ui_font);
     }
 
-    const logic::GameConfig & Game::config() const { return config_; }
+    const logic::GameConfig& Game::config() const {
+        return config_;
+    }
 
-    const GameAssets & Game::assets() const { return *assets_; }
-    logic::ScoreBoard & Game::score_board() { return score_board_; }
-    const std::string & Game::score_board_path() const { return score_board_path_; }
+    const GameAssets& Game::assets() const {
+        return *assets_;
+    }
+    logic::ScoreBoard& Game::score_board() {
+        return score_board_;
+    }
+    const std::string& Game::score_board_path() const {
+        return score_board_path_;
+    }
 
-    logic::PlayerProfile & Game::profile() { return profile_; }
+    logic::PlayerProfile& Game::profile() {
+        return profile_;
+    }
 
-    void Game::save_profile() const { profile_.save(profile_path_); }
+    void Game::save_profile() const {
+        profile_.save(profile_path_);
+    }
 
-    std::string Game::scene_path(const std::string &scene_file) const {
+    std::string Game::scene_path(const std::string& scene_file) const {
         return data_dir_ + "bin/scenes/" + scene_file;
     }
 
     void Game::click() const {
         audio_->play(assets_->sound(assets::sfx_menu), 0.8f);
     }
-}
+} // namespace bomberman::view

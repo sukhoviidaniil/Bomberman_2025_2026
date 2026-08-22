@@ -6,7 +6,7 @@
  * Disclaimer:
  *   This file is part of Bomberman.
  *   Unauthorized use, reproduction, or distribution is prohibited.
-***************************************************************/
+ ***************************************************************/
 #ifndef BOMBERMAN_VIEW_UISCENE_H
 #define BOMBERMAN_VIEW_UISCENE_H
 
@@ -99,14 +99,12 @@ namespace bomberman::view {
         [[nodiscard]] bool empty() const;
 
         /// @brief Recolours the items so the selected one stands out.
-        void apply(UiScene& scene,
-                   sif::intrnl::Color selected,
-                   sif::intrnl::Color normal) const;
+        void apply(UiScene& scene, sif::intrnl::Color selected, sif::intrnl::Color normal) const;
 
     private:
         std::vector<std::string> items_;
         std::size_t index_ = 0;
     };
-}
+} // namespace bomberman::view
 
-#endif //BOMBERMAN_VIEW_UISCENE_H
+#endif // BOMBERMAN_VIEW_UISCENE_H

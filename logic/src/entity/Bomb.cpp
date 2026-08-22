@@ -6,7 +6,7 @@
  * Disclaimer:
  *   This file is part of Bomberman.
  *   Unauthorized use, reproduction, or distribution is prohibited.
-***************************************************************/
+ ***************************************************************/
 
 #include "bomberman/logic/entity/Bomb.h"
 
@@ -19,16 +19,12 @@ namespace bomberman::logic {
     namespace {
         /// How long before the blast the view starts flashing.
         constexpr float critical_fuse_seconds = 1.f;
-    }
+    } // namespace
 
-    Bomb::Bomb(const sif::math::Point2 position, const float size, const TilePos cell,
-               std::weak_ptr<Character> owner, const unsigned int radius, const float fuse_seconds)
-        : Entity("Bomb", position, size)
-        , cell_(cell)
-        , owner_(std::move(owner))
-        , radius_(radius)
-        , fuse_remaining_(fuse_seconds) {
-    }
+    Bomb::Bomb(const sif::math::Point2 position, const float size, const TilePos cell, std::weak_ptr<Character> owner,
+               const unsigned int radius, const float fuse_seconds)
+        : Entity("Bomb", position, size), cell_(cell), owner_(std::move(owner)), radius_(radius),
+          fuse_remaining_(fuse_seconds) {}
 
     void Bomb::update(const float dt) {
         if (detonated_) {
@@ -47,11 +43,21 @@ namespace bomberman::logic {
         }
     }
 
-    const TilePos & Bomb::cell() const { return cell_; }
-    unsigned int Bomb::radius() const { return radius_; }
-    std::weak_ptr<Character> Bomb::owner() const { return owner_; }
-    float Bomb::fuse_remaining() const { return fuse_remaining_; }
-    bool Bomb::detonated() const { return detonated_; }
+    const TilePos& Bomb::cell() const {
+        return cell_;
+    }
+    unsigned int Bomb::radius() const {
+        return radius_;
+    }
+    std::weak_ptr<Character> Bomb::owner() const {
+        return owner_;
+    }
+    float Bomb::fuse_remaining() const {
+        return fuse_remaining_;
+    }
+    bool Bomb::detonated() const {
+        return detonated_;
+    }
 
     void Bomb::detonate() {
         if (detonated_) {
@@ -60,4 +66,4 @@ namespace bomberman::logic {
         detonated_ = true;
         fuse_remaining_ = 0.f;
     }
-}
+} // namespace bomberman::logic

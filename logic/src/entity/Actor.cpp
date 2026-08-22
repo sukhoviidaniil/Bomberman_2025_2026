@@ -6,7 +6,7 @@
  * Disclaimer:
  *   This file is part of Bomberman.
  *   Unauthorized use, reproduction, or distribution is prohibited.
-***************************************************************/
+ ***************************************************************/
 
 #include "bomberman/logic/entity/Actor.h"
 
@@ -20,23 +20,30 @@ namespace bomberman::logic {
     Actor::~Actor() = default;
 
     Actor::Actor(std::string name, const sif::math::Point2 position, const float size, const float speed)
-        : Entity(std::move(name), position, size), speed_(speed) {
-    }
+        : Entity(std::move(name), position, size), speed_(speed) {}
 
     void Actor::set_direction(const Direction direction) {
         requested_direction_ = direction;
     }
 
-    Direction Actor::direction() const { return current_direction_; }
-    Direction Actor::requested_direction() const { return requested_direction_; }
-    bool Actor::moving() const { return moving_; }
-    float Actor::speed() const { return speed_; }
+    Direction Actor::direction() const {
+        return current_direction_;
+    }
+    Direction Actor::requested_direction() const {
+        return requested_direction_;
+    }
+    bool Actor::moving() const {
+        return moving_;
+    }
+    float Actor::speed() const {
+        return speed_;
+    }
 
     void Actor::set_speed(const float speed) {
         speed_ = std::max(0.f, speed);
     }
 
-    bool Actor::can_enter(const TilePos &cell, const TileGrid &grid) const {
+    bool Actor::can_enter(const TilePos& cell, const TileGrid& grid) const {
         return walkable(grid.get_tile(cell));
     }
 
@@ -48,7 +55,7 @@ namespace bomberman::logic {
         bus_->emit(entity_events::MotionChanged{moving_, current_direction_});
     }
 
-    void Actor::move(const float dt, const TileGrid &grid) {
+    void Actor::move(const float dt, const TileGrid& grid) {
         if (speed_ <= 0.f || dt <= 0.f) {
             announce_motion(false);
             return;
@@ -120,12 +127,11 @@ namespace bomberman::logic {
             remaining -= step;
         }
 
-        const bool advanced =
-            std::abs(position_.x - start.x) > eps || std::abs(position_.y - start.y) > eps;
+        const bool advanced = std::abs(position_.x - start.x) > eps || std::abs(position_.y - start.y) > eps;
 
         announce_motion(advanced);
         if (advanced) {
             bus_->emit(entity_events::Moved{position_, current_direction_});
         }
     }
-}
+} // namespace bomberman::logic

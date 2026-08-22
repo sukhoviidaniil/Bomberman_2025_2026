@@ -6,7 +6,7 @@
  * Disclaimer:
  *   This file is part of Bomberman.
  *   Unauthorized use, reproduction, or distribution is prohibited.
-***************************************************************/
+ ***************************************************************/
 
 #include "TestFramework.h"
 
@@ -32,7 +32,7 @@ namespace {
         std::shared_ptr<IEntityFactory> factory = std::make_shared<HeadlessEntityFactory>();
         World world{bus, factory};
     };
-}
+} // namespace
 
 // ---------------------------------------------------------------------
 // Normalized coordinates

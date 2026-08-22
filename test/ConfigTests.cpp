@@ -6,7 +6,7 @@
  * Disclaimer:
  *   This file is part of Bomberman.
  *   Unauthorized use, reproduction, or distribution is prohibited.
-***************************************************************/
+ ***************************************************************/
 
 #include "TestFramework.h"
 
@@ -46,16 +46,22 @@ namespace {
         for (int row = 0; row < static_cast<int>(grid.rows()); ++row) {
             for (int col = 0; col < static_cast<int>(grid.columns()); ++col) {
                 switch (grid.get_tile({row, col})) {
-                    case Tile::Indestructible: out += '#'; break;
-                    case Tile::Destructible:   out += '+'; break;
-                    default:                   out += '.'; break;
+                case Tile::Indestructible:
+                    out += '#';
+                    break;
+                case Tile::Destructible:
+                    out += '+';
+                    break;
+                default:
+                    out += '.';
+                    break;
                 }
             }
             out += '\n';
         }
         return out;
     }
-}
+} // namespace
 
 // ---------------------------------------------------------------------
 // Loading
@@ -102,24 +108,17 @@ SIF_TEST(a_missing_config_file_is_reported_not_ignored) {
 SIF_TEST(invalid_config_values_are_rejected_with_a_reason) {
     // Each of these used to be the kind of thing that only shows up as
     // strange behaviour three screens later.
-    SIF_CHECK(throws([] {
-        (void)GameConfig::load(temp_config("bm_bad1.json", R"({"map": {"rows": 1}})"));
-    }));
-    SIF_CHECK(throws([] {
-        (void)GameConfig::load(temp_config("bm_bad2.json", R"({"power_ups": {"drop_chance": 5.0}})"));
-    }));
-    SIF_CHECK(throws([] {
-        (void)GameConfig::load(temp_config("bm_bad5.json", R"({"power_ups": {"fire_weight": -1.0}})"));
-    }));
-    SIF_CHECK(throws([] {
-        (void)GameConfig::load(temp_config("bm_bad6.json", R"({"power_ups": {"max_speed": 0.0}})"));
-    }));
-    SIF_CHECK(throws([] {
-        (void)GameConfig::load(temp_config("bm_bad3.json", R"({"round": {"character_speed": -1.0}})"));
-    }));
-    SIF_CHECK(throws([] {
-        (void)GameConfig::load(temp_config("bm_bad4.json", R"({"audio": {"master_volume": 2.0}})"));
-    }));
+    SIF_CHECK(throws([] { (void)GameConfig::load(temp_config("bm_bad1.json", R"({"map": {"rows": 1}})")); }));
+    SIF_CHECK(
+        throws([] { (void)GameConfig::load(temp_config("bm_bad2.json", R"({"power_ups": {"drop_chance": 5.0}})")); }));
+    SIF_CHECK(
+        throws([] { (void)GameConfig::load(temp_config("bm_bad5.json", R"({"power_ups": {"fire_weight": -1.0}})")); }));
+    SIF_CHECK(
+        throws([] { (void)GameConfig::load(temp_config("bm_bad6.json", R"({"power_ups": {"max_speed": 0.0}})")); }));
+    SIF_CHECK(
+        throws([] { (void)GameConfig::load(temp_config("bm_bad3.json", R"({"round": {"character_speed": -1.0}})")); }));
+    SIF_CHECK(
+        throws([] { (void)GameConfig::load(temp_config("bm_bad4.json", R"({"audio": {"master_volume": 2.0}})")); }));
 }
 
 SIF_TEST(a_ragged_layout_is_rejected) {
@@ -177,27 +176,19 @@ SIF_TEST(a_seeded_arena_does_not_depend_on_earlier_draws) {
 // ---------------------------------------------------------------------
 
 SIF_TEST(a_layout_is_used_verbatim) {
-    const std::vector<std::string> layout = {
-        "1.+#",
-        "#+..",
-        "..+2"
-    };
+    const std::vector<std::string> layout = {"1.+#", "#+..", "..+2"};
 
     const TileGrid grid = TileGrid::from_layout(layout);
 
     SIF_CHECK(grid.rows() == 3 && grid.columns() == 4);
-    SIF_CHECK(grid.get_tile({0, 0}) == Tile::Free);          // '1' is a spawn, hence free
+    SIF_CHECK(grid.get_tile({0, 0}) == Tile::Free); // '1' is a spawn, hence free
     SIF_CHECK(grid.get_tile({0, 2}) == Tile::Destructible);
     SIF_CHECK(grid.get_tile({0, 3}) == Tile::Indestructible);
     SIF_CHECK(grid.get_tile({1, 0}) == Tile::Indestructible);
 }
 
 SIF_TEST(layout_digits_decide_where_characters_spawn) {
-    const TileGrid grid = TileGrid::from_layout({
-        "..2",
-        "...",
-        "1.."
-    });
+    const TileGrid grid = TileGrid::from_layout({"..2", "...", "1.."});
 
     const std::vector<TilePos>& spawns = grid.spawn_cells();
     SIF_CHECK(spawns.size() == 2);
@@ -207,11 +198,7 @@ SIF_TEST(layout_digits_decide_where_characters_spawn) {
 }
 
 SIF_TEST(a_layout_without_digits_falls_back_to_the_corners) {
-    const TileGrid grid = TileGrid::from_layout({
-        "...",
-        "...",
-        "..."
-    });
+    const TileGrid grid = TileGrid::from_layout({"...", "...", "..."});
 
     SIF_CHECK(grid.spawn_cells().size() == 4);
     SIF_CHECK(grid.spawn_cells().front() == TilePos(0, 0));
@@ -224,12 +211,9 @@ SIF_TEST(an_unknown_layout_character_is_rejected) {
 
 SIF_TEST(the_world_uses_the_layout_in_preference_to_a_seed) {
     MapConfig map;
-    map.seed = 1u;                 // would generate a 11x13 arena...
-    map.layout = {                 // ...but the layout wins
-        "1..2",
-        "....",
-        "3..4"
-    };
+    map.seed = 1u; // would generate a 11x13 arena...
+    map.layout = { // ...but the layout wins
+                  "1..2", "....", "3..4"};
 
     const auto bus = std::make_shared<sif::event::Event_Bus>();
     const auto factory = std::make_shared<HeadlessEntityFactory>();

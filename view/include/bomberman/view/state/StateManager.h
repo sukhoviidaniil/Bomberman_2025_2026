@@ -6,7 +6,7 @@
  * Disclaimer:
  *   This file is part of Bomberman.
  *   Unauthorized use, reproduction, or distribution is prohibited.
-***************************************************************/
+ ***************************************************************/
 #ifndef BOMBERMAN_VIEW_STATEMANAGER_H
 #define BOMBERMAN_VIEW_STATEMANAGER_H
 
@@ -98,6 +98,6 @@ namespace bomberman::view {
         std::vector<std::unique_ptr<State>> stack_;
         std::vector<Pending> pending_;
     };
-}
+} // namespace bomberman::view
 
-#endif //BOMBERMAN_VIEW_STATEMANAGER_H
+#endif // BOMBERMAN_VIEW_STATEMANAGER_H

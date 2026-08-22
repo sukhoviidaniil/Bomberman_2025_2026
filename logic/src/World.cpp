@@ -6,7 +6,7 @@
  * Disclaimer:
  *   This file is part of Bomberman.
  *   Unauthorized use, reproduction, or distribution is prohibited.
-***************************************************************/
+ ***************************************************************/
 
 #include "bomberman/logic/World.h"
 
@@ -19,11 +19,10 @@
 
 namespace bomberman::logic {
 
-    World::World(std::shared_ptr<sif::event::Event_Bus> bus,
-                 std::shared_ptr<IEntityFactory> factory,
-                 MapConfig map, RoundConfig round, PowerUpRules power_ups)
-        : bus_(std::move(bus)), factory_(std::move(factory))
-        , map_(std::move(map)), round_(round), power_ups_(power_ups) {
+    World::World(std::shared_ptr<sif::event::Event_Bus> bus, std::shared_ptr<IEntityFactory> factory, MapConfig map,
+                 RoundConfig round, PowerUpRules power_ups)
+        : bus_(std::move(bus)), factory_(std::move(factory)), map_(std::move(map)), round_(round),
+          power_ups_(power_ups) {
 
         if (bus_ == nullptr || factory_ == nullptr) {
             throw std::invalid_argument("World: an event bus and an entity factory are required");
@@ -63,8 +62,8 @@ namespace bomberman::logic {
 
         // The player takes the top-left corner, as the assignment
         // specifies; the bots fill the remaining three.
-        player_ = factory_->make_character(
-            CharacterKind::Player, grid_.get_center(spawns[0]), size, round_.character_speed);
+        player_ =
+            factory_->make_character(CharacterKind::Player, grid_.get_center(spawns[0]), size, round_.character_speed);
         characters_.push_back(player_);
         teach_obstacles(player_);
 
@@ -82,8 +81,8 @@ namespace bomberman::logic {
             // listed, so three bots with two personalities configured get
             // the first one twice rather than none at all.
             const ai::BotPersonality personality = round_.bot_personalities.empty()
-                ? ai::BotPersonality::Balanced
-                : round_.bot_personalities[i % round_.bot_personalities.size()];
+                                                       ? ai::BotPersonality::Balanced
+                                                       : round_.bot_personalities[i % round_.bot_personalities.size()];
 
             bots_.push_back(BotSlot{bot, ai::BotBrain(personality), TilePos{-1, -1}, 0.f});
         }
@@ -138,7 +137,7 @@ namespace bomberman::logic {
         }
     }
 
-    void World::teach_obstacles(const std::shared_ptr<Character> &character) const {
+    void World::teach_obstacles(const std::shared_ptr<Character>& character) const {
         // A bomb blocks movement, except for the character still standing
         // on the one they just placed - "After moving out of the bomb, the
         // player can no longer go through it". The rule lives in the World
@@ -179,19 +178,11 @@ namespace bomberman::logic {
             slot.last_cell = *cell;
             slot.seconds_since_decision = 0.f;
 
-            const ai::BotContext ctx{
-                grid_,
-                danger_,
-                *bot,
-                *cell,
-                characters_,
-                power_ups_entities_,
-                [this](const TilePos& c) { return has_bomb_at(c); },
-                round_.bomb_fuse_seconds,
-                // Tiles per second: the bot reasons in cells, the world
-                // moves in world units, and the tile size is the bridge.
-                grid_.tile_size() > 0.f ? bot->speed() / grid_.tile_size() : 0.f
-            };
+            const ai::BotContext ctx{grid_, danger_, *bot, *cell, characters_, power_ups_entities_,
+                                     [this](const TilePos& c) { return has_bomb_at(c); }, round_.bomb_fuse_seconds,
+                                     // Tiles per second: the bot reasons in cells, the world
+                                     // moves in world units, and the tile size is the bridge.
+                                     grid_.tile_size() > 0.f ? bot->speed() / grid_.tile_size() : 0.f};
 
             const ai::BotAction action = slot.brain.decide(ctx);
 
@@ -204,7 +195,7 @@ namespace bomberman::logic {
         }
     }
 
-    void World::place_bomb_for(const std::shared_ptr<Character> &character) {
+    void World::place_bomb_for(const std::shared_ptr<Character>& character) {
         if (character == nullptr || !character->can_place_bomb()) {
             return;
         }
@@ -214,9 +205,8 @@ namespace bomberman::logic {
             return;
         }
 
-        bombs_.push_back(factory_->make_bomb(
-            grid_.get_center(*cell), grid_.tile_size(), *cell,
-            character, character->blast_radius(), round_.bomb_fuse_seconds));
+        bombs_.push_back(factory_->make_bomb(grid_.get_center(*cell), grid_.tile_size(), *cell, character,
+                                             character->blast_radius(), round_.bomb_fuse_seconds));
 
         character->on_bomb_placed();
         bus_->emit(game_events::BombPlaced{*cell, character == player_});
@@ -226,7 +216,7 @@ namespace bomberman::logic {
         character->allow_leaving(*cell);
     }
 
-    bool World::has_bomb_at(const TilePos &cell) const {
+    bool World::has_bomb_at(const TilePos& cell) const {
         return std::any_of(bombs_.begin(), bombs_.end(),
                            [&cell](const std::shared_ptr<Bomb>& b) { return b->cell() == cell; });
     }
@@ -267,15 +257,14 @@ namespace bomberman::logic {
         }
     }
 
-    void World::spread_blast(const Bomb &bomb) {
-        const bool from_player =
-            player_ != nullptr && bomb.owner().lock() == player_;
+    void World::spread_blast(const Bomb& bomb) {
+        const bool from_player = player_ != nullptr && bomb.owner().lock() == player_;
 
         const float tile = grid_.tile_size();
 
         const auto ignite = [&](const TilePos& cell) {
-            explosions_.push_back(factory_->make_explosion(
-                grid_.get_center(cell), tile, cell, round_.explosion_seconds, from_player));
+            explosions_.push_back(
+                factory_->make_explosion(grid_.get_center(cell), tile, cell, round_.explosion_seconds, from_player));
 
             // Any bomb caught by the fire goes off too; detonate() is
             // idempotent, so overlapping blasts are harmless.
@@ -292,10 +281,8 @@ namespace bomberman::logic {
             const Direction dir = by_index(i);
 
             for (unsigned int step = 1; step <= bomb.radius(); ++step) {
-                const TilePos cell{
-                    bomb.cell().row + static_cast<int>(to_vector(dir).y) * static_cast<int>(step),
-                    bomb.cell().col + static_cast<int>(to_vector(dir).x) * static_cast<int>(step)
-                };
+                const TilePos cell{bomb.cell().row + static_cast<int>(to_vector(dir).y) * static_cast<int>(step),
+                                   bomb.cell().col + static_cast<int>(to_vector(dir).x) * static_cast<int>(step)};
 
                 const Tile tile_kind = grid_.get_tile(cell);
 
@@ -317,9 +304,8 @@ namespace bomberman::logic {
                     // so no power-up ever reached the player.
                     if (sif::intrnl::rand_chance(power_ups_.drop_chance)) {
                         const PowerUpKind kind = power_ups_.roll_kind();
-                        power_ups_entities_.push_back(factory_->make_power_up(
-                            grid_.get_center(cell), tile * 0.7f, cell, kind,
-                            round_.explosion_seconds));
+                        power_ups_entities_.push_back(factory_->make_power_up(grid_.get_center(cell), tile * 0.7f, cell,
+                                                                              kind, round_.explosion_seconds));
                     }
 
                     break; // "only through one destructible block at a time"
@@ -345,16 +331,13 @@ namespace bomberman::logic {
                 }
 
                 character->kill();
-                bus_->emit(game_events::CharacterKilled{
-                    character->kind(),
-                    explosion->from_player() && character != player_
-                });
+                bus_->emit(
+                    game_events::CharacterKilled{character->kind(), explosion->from_player() && character != player_});
             }
 
             // Pick-ups burn as well.
             for (const auto& power_up : power_ups_entities_) {
-                if (!power_up->expired() && !power_up->shielded()
-                    && power_up->cell() == explosion->cell()) {
+                if (!power_up->expired() && !power_up->shielded() && power_up->cell() == explosion->cell()) {
                     power_up->expire();
                 }
             }
@@ -379,9 +362,7 @@ namespace bomberman::logic {
     }
 
     void World::remove_expired() {
-        const auto drop = [](auto& container) {
-            std::erase_if(container, [](const auto& e) { return e->expired(); });
-        };
+        const auto drop = [](auto& container) { std::erase_if(container, [](const auto& e) { return e->expired(); }); };
         drop(bombs_);
         drop(explosions_);
         drop(power_ups_entities_);
@@ -395,9 +376,8 @@ namespace bomberman::logic {
         }
 
         const bool player_alive = player_ != nullptr && player_->alive();
-        const auto living_bots = std::count_if(
-            characters_.begin(), characters_.end(),
-            [](const std::shared_ptr<Character>& c) {
+        const auto living_bots =
+            std::count_if(characters_.begin(), characters_.end(), [](const std::shared_ptr<Character>& c) {
                 return c->alive() && c->kind() == CharacterKind::Bot;
             });
 
@@ -414,12 +394,28 @@ namespace bomberman::logic {
         }
     }
 
-    const TileGrid & World::grid() const { return grid_; }
-    const std::shared_ptr<Character> & World::player() const { return player_; }
-    const std::vector<std::shared_ptr<Character>> & World::characters() const { return characters_; }
-    const std::vector<std::shared_ptr<Bomb>> & World::bombs() const { return bombs_; }
-    const std::vector<std::shared_ptr<Explosion>> & World::explosions() const { return explosions_; }
-    const std::vector<std::shared_ptr<PowerUp>> & World::power_ups() const { return power_ups_entities_; }
-    bool World::round_over() const { return round_over_; }
-    bool World::player_won() const { return player_won_; }
-}
+    const TileGrid& World::grid() const {
+        return grid_;
+    }
+    const std::shared_ptr<Character>& World::player() const {
+        return player_;
+    }
+    const std::vector<std::shared_ptr<Character>>& World::characters() const {
+        return characters_;
+    }
+    const std::vector<std::shared_ptr<Bomb>>& World::bombs() const {
+        return bombs_;
+    }
+    const std::vector<std::shared_ptr<Explosion>>& World::explosions() const {
+        return explosions_;
+    }
+    const std::vector<std::shared_ptr<PowerUp>>& World::power_ups() const {
+        return power_ups_entities_;
+    }
+    bool World::round_over() const {
+        return round_over_;
+    }
+    bool World::player_won() const {
+        return player_won_;
+    }
+} // namespace bomberman::logic

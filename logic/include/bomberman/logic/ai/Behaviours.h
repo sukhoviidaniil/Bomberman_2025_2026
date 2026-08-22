@@ -6,7 +6,7 @@
  * Disclaimer:
  *   This file is part of Bomberman.
  *   Unauthorized use, reproduction, or distribution is prohibited.
-***************************************************************/
+ ***************************************************************/
 #ifndef BOMBERMAN_LOGIC_BEHAVIOURS_H
 #define BOMBERMAN_LOGIC_BEHAVIOURS_H
 
@@ -94,8 +94,8 @@ namespace bomberman::logic::ai {
     private:
         /// @brief True if `target` is in line with `from` and within radius,
         /// with nothing but free cells in between.
-        [[nodiscard]] static bool in_blast_line(const BotContext& ctx, const TilePos& from,
-                                                const TilePos& target, unsigned int radius);
+        [[nodiscard]] static bool in_blast_line(const BotContext& ctx, const TilePos& from, const TilePos& target,
+                                                unsigned int radius);
 
         int engage_radius_;
     };
@@ -113,6 +113,6 @@ namespace bomberman::logic::ai {
         [[nodiscard]] std::string name() const override { return "wander"; }
         [[nodiscard]] std::optional<BotAction> decide(const BotContext& ctx) const override;
     };
-}
+} // namespace bomberman::logic::ai
 
-#endif //BOMBERMAN_LOGIC_BEHAVIOURS_H
+#endif // BOMBERMAN_LOGIC_BEHAVIOURS_H

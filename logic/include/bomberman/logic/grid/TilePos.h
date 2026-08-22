@@ -34,22 +34,16 @@ namespace bomberman::logic {
         constexpr TilePos() = default;
         constexpr TilePos(const int row_, const int col_) : row(row_), col(col_) {}
 
-        constexpr bool operator==(const TilePos& other) const noexcept {
-            return row == other.row && col == other.col;
-        }
+        constexpr bool operator==(const TilePos& other) const noexcept { return row == other.row && col == other.col; }
 
-        constexpr bool operator!=(const TilePos& other) const noexcept {
-            return !(*this == other);
-        }
+        constexpr bool operator!=(const TilePos& other) const noexcept { return !(*this == other); }
 
         /// @brief Lexicographic ordering, so TilePos can be a map key.
         bool operator<(const TilePos& other) const noexcept {
             return std::tie(row, col) < std::tie(other.row, other.col);
         }
 
-        constexpr TilePos operator+(const TilePos& other) const noexcept {
-            return {row + other.row, col + other.col};
-        }
+        constexpr TilePos operator+(const TilePos& other) const noexcept { return {row + other.row, col + other.col}; }
     };
 
     /// @brief Grid ("taxicab") distance between two cells.
@@ -64,10 +58,9 @@ namespace bomberman::logic {
 
     struct TilePosHash {
         std::size_t operator()(const TilePos& p) const noexcept {
-            return static_cast<std::size_t>(p.row) * 73856093u
-                 ^ static_cast<std::size_t>(p.col) * 19349663u;
+            return static_cast<std::size_t>(p.row) * 73856093u ^ static_cast<std::size_t>(p.col) * 19349663u;
         }
     };
-}
+} // namespace bomberman::logic
 
-#endif //BOMBERMAN_LOGIC_TILEPOS_H
+#endif // BOMBERMAN_LOGIC_TILEPOS_H

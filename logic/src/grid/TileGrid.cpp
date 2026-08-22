@@ -6,7 +6,7 @@
  * Disclaimer:
  *   This file is part of Bomberman.
  *   Unauthorized use, reproduction, or distribution is prohibited.
-***************************************************************/
+ ***************************************************************/
 
 #include "bomberman/logic/grid/TileGrid.h"
 
@@ -20,7 +20,7 @@ namespace bomberman::logic {
     namespace {
         /// The world spans [-1, 1] on both axes, i.e. two units per axis.
         constexpr float world_extent = 2.f;
-    }
+    } // namespace
 
     TileGrid::TileGrid(const std::size_t rows, const std::size_t columns)
         : rows_(rows), columns_(columns), tiles_(rows * columns, Tile::Free) {
@@ -37,31 +37,30 @@ namespace bomberman::logic {
         const auto longest = static_cast<float>(std::max(rows_, columns_));
         tile_size_ = world_extent / longest;
 
-        origin_ = {
-            -static_cast<float>(columns_) * tile_size_ * 0.5f,
-            -static_cast<float>(rows_) * tile_size_ * 0.5f
-        };
+        origin_ = {-static_cast<float>(columns_) * tile_size_ * 0.5f, -static_cast<float>(rows_) * tile_size_ * 0.5f};
     }
 
-    std::size_t TileGrid::rows() const { return rows_; }
-    std::size_t TileGrid::columns() const { return columns_; }
-    float TileGrid::tile_size() const { return tile_size_; }
+    std::size_t TileGrid::rows() const {
+        return rows_;
+    }
+    std::size_t TileGrid::columns() const {
+        return columns_;
+    }
+    float TileGrid::tile_size() const {
+        return tile_size_;
+    }
 
     sif::intrnl::Rect TileGrid::bounds() const {
-        return {
-            origin_.x, origin_.y,
-            static_cast<float>(columns_) * tile_size_,
-            static_cast<float>(rows_) * tile_size_
-        };
+        return {origin_.x, origin_.y, static_cast<float>(columns_) * tile_size_,
+                static_cast<float>(rows_) * tile_size_};
     }
 
-    bool TileGrid::contains(const TilePos &pos) const {
-        return pos.row >= 0 && pos.col >= 0
-            && static_cast<std::size_t>(pos.row) < rows_
-            && static_cast<std::size_t>(pos.col) < columns_;
+    bool TileGrid::contains(const TilePos& pos) const {
+        return pos.row >= 0 && pos.col >= 0 && static_cast<std::size_t>(pos.row) < rows_ &&
+               static_cast<std::size_t>(pos.col) < columns_;
     }
 
-    Tile TileGrid::get_tile(const TilePos &pos) const {
+    Tile TileGrid::get_tile(const TilePos& pos) const {
         if (!contains(pos)) {
             // The arena is implicitly walled in. Reporting Free here (or
             // clamping, as the Pac-Man grid did) would let a blast or a
@@ -71,7 +70,7 @@ namespace bomberman::logic {
         return tiles_[static_cast<std::size_t>(pos.row) * columns_ + static_cast<std::size_t>(pos.col)];
     }
 
-    void TileGrid::set_tile(const TilePos &pos, const Tile tile) {
+    void TileGrid::set_tile(const TilePos& pos, const Tile tile) {
         if (!contains(pos)) {
             throw std::out_of_range("TileGrid::set_tile - cell outside the arena");
         }
@@ -84,15 +83,13 @@ namespace bomberman::logic {
         return pos;
     }
 
-    std::optional<TilePos> TileGrid::get_TilePos(const sif::math::Point2 &pos) const {
+    std::optional<TilePos> TileGrid::get_TilePos(const sif::math::Point2& pos) const {
         if (tile_size_ <= 0.f) {
             return std::nullopt;
         }
 
-        const TilePos cell{
-            static_cast<int>(std::floor((pos.y - origin_.y) / tile_size_)),
-            static_cast<int>(std::floor((pos.x - origin_.x) / tile_size_))
-        };
+        const TilePos cell{static_cast<int>(std::floor((pos.y - origin_.y) / tile_size_)),
+                           static_cast<int>(std::floor((pos.x - origin_.x) / tile_size_))};
 
         if (!contains(cell)) {
             return std::nullopt;
@@ -100,33 +97,32 @@ namespace bomberman::logic {
         return cell;
     }
 
-    TilePos TileGrid::neighbour(const TilePos &pos, const Direction dir) const {
+    TilePos TileGrid::neighbour(const TilePos& pos, const Direction dir) const {
         switch (dir) {
-            case Direction::Up:    return {pos.row - 1, pos.col};
-            case Direction::Down:  return {pos.row + 1, pos.col};
-            case Direction::Left:  return {pos.row, pos.col - 1};
-            case Direction::Right: return {pos.row, pos.col + 1};
-            default:               return pos;
+        case Direction::Up:
+            return {pos.row - 1, pos.col};
+        case Direction::Down:
+            return {pos.row + 1, pos.col};
+        case Direction::Left:
+            return {pos.row, pos.col - 1};
+        case Direction::Right:
+            return {pos.row, pos.col + 1};
+        default:
+            return pos;
         }
     }
 
-    sif::math::Point2 TileGrid::get_center(const TilePos &pos) const {
-        return {
-            origin_.x + (static_cast<float>(pos.col) + 0.5f) * tile_size_,
-            origin_.y + (static_cast<float>(pos.row) + 0.5f) * tile_size_
-        };
+    sif::math::Point2 TileGrid::get_center(const TilePos& pos) const {
+        return {origin_.x + (static_cast<float>(pos.col) + 0.5f) * tile_size_,
+                origin_.y + (static_cast<float>(pos.row) + 0.5f) * tile_size_};
     }
 
-    sif::intrnl::Rect TileGrid::get_rect(const TilePos &pos) const {
-        return {
-            origin_.x + static_cast<float>(pos.col) * tile_size_,
-            origin_.y + static_cast<float>(pos.row) * tile_size_,
-            tile_size_,
-            tile_size_
-        };
+    sif::intrnl::Rect TileGrid::get_rect(const TilePos& pos) const {
+        return {origin_.x + static_cast<float>(pos.col) * tile_size_,
+                origin_.y + static_cast<float>(pos.row) * tile_size_, tile_size_, tile_size_};
     }
 
-    bool TileGrid::is_junction(const TilePos &pos, const Direction current) const {
+    bool TileGrid::is_junction(const TilePos& pos, const Direction current) const {
         for (std::size_t i = 0; i < direction_count; ++i) {
             const Direction dir = by_index(i);
             if (dir == current || dir == opposite(current)) {
@@ -139,22 +135,17 @@ namespace bomberman::logic {
         return false;
     }
 
-    const std::vector<TilePos> & TileGrid::spawn_cells() const {
+    const std::vector<TilePos>& TileGrid::spawn_cells() const {
         return spawns_;
     }
 
     std::vector<TilePos> TileGrid::default_spawn_cells() const {
         const int last_row = static_cast<int>(rows_) - 1;
         const int last_col = static_cast<int>(columns_) - 1;
-        return {
-            {0, 0},
-            {0, last_col},
-            {last_row, 0},
-            {last_row, last_col}
-        };
+        return {{0, 0}, {0, last_col}, {last_row, 0}, {last_row, last_col}};
     }
 
-    TileGrid TileGrid::from_layout(const std::vector<std::string> &layout) {
+    TileGrid TileGrid::from_layout(const std::vector<std::string>& layout) {
         if (layout.empty() || layout.front().empty()) {
             throw std::invalid_argument("TileGrid::from_layout - the layout is empty");
         }
@@ -162,9 +153,8 @@ namespace bomberman::logic {
         const std::size_t columns = layout.front().size();
         for (std::size_t row = 0; row < layout.size(); ++row) {
             if (layout[row].size() != columns) {
-                throw std::invalid_argument(
-                    "TileGrid::from_layout - row " + std::to_string(row) +
-                    " has a different width than the first row");
+                throw std::invalid_argument("TileGrid::from_layout - row " + std::to_string(row) +
+                                            " has a different width than the first row");
             }
         }
 
@@ -180,26 +170,28 @@ namespace bomberman::logic {
                 const char c = layout[row][col];
 
                 switch (c) {
-                    case '#':
-                        grid.set_tile(cell, Tile::Indestructible);
-                        break;
-                    case '+':
-                    case '*':
-                        grid.set_tile(cell, Tile::Destructible);
-                        break;
-                    case '.':
-                    case ' ':
-                        grid.set_tile(cell, Tile::Free);
-                        break;
-                    case '1': case '2': case '3': case '4':
-                        grid.set_tile(cell, Tile::Free);
-                        spawns_by_digit.emplace(c, cell);
-                        break;
-                    default:
-                        throw std::invalid_argument(
-                            std::string("TileGrid::from_layout - unknown character '") + c +
-                            "' at row " + std::to_string(row) + ", column " + std::to_string(col) +
-                            " (expected one of # + * . space 1 2 3 4)");
+                case '#':
+                    grid.set_tile(cell, Tile::Indestructible);
+                    break;
+                case '+':
+                case '*':
+                    grid.set_tile(cell, Tile::Destructible);
+                    break;
+                case '.':
+                case ' ':
+                    grid.set_tile(cell, Tile::Free);
+                    break;
+                case '1':
+                case '2':
+                case '3':
+                case '4':
+                    grid.set_tile(cell, Tile::Free);
+                    spawns_by_digit.emplace(c, cell);
+                    break;
+                default:
+                    throw std::invalid_argument(std::string("TileGrid::from_layout - unknown character '") + c +
+                                                "' at row " + std::to_string(row) + ", column " + std::to_string(col) +
+                                                " (expected one of # + * . space 1 2 3 4)");
                 }
             }
         }
@@ -259,4 +251,4 @@ namespace bomberman::logic {
             }
         }
     }
-}
+} // namespace bomberman::logic

@@ -6,7 +6,7 @@
  * Disclaimer:
  *   This file is part of Bomberman.
  *   Unauthorized use, reproduction, or distribution is prohibited.
-***************************************************************/
+ ***************************************************************/
 #ifndef BOMBERMAN_VIEW_ENTITYVIEW_H
 #define BOMBERMAN_VIEW_ENTITYVIEW_H
 
@@ -68,8 +68,7 @@ namespace bomberman::view {
          * @param frame Draw list being assembled.
          * @param camera Projects normalized world coordinates to pixels.
          */
-        virtual void append_render_items(sif::rnd::RenderFrame& frame,
-                                         const sif::rnd::Camera& camera) const = 0;
+        virtual void append_render_items(sif::rnd::RenderFrame& frame, const sif::rnd::Camera& camera) const = 0;
 
     protected:
         /**
@@ -88,14 +87,13 @@ namespace bomberman::view {
          * @param width_scale Sprite width as a multiple of the entity size.
          */
         void append_animation(sif::rnd::RenderFrame& frame, const sif::rnd::Camera& camera,
-                              const sif::asset::AssetHandle<sif::asset::PrimitiveAnimation>& animation,
-                              float elapsed, float width_scale, bool anchor_bottom,
-                              sif::intrnl::Color tint = {}) const;
+                              const sif::asset::AssetHandle<sif::asset::PrimitiveAnimation>& animation, float elapsed,
+                              float width_scale, bool anchor_bottom, sif::intrnl::Color tint = {}) const;
 
         /// @brief Draws a whole SpriteSingle centred on this entity.
         void append_sprite(sif::rnd::RenderFrame& frame, const sif::rnd::Camera& camera,
-                           const sif::asset::AssetHandle<void>& sprite,
-                           float width_scale, sif::intrnl::Color tint = {}) const;
+                           const sif::asset::AssetHandle<void>& sprite, float width_scale,
+                           sif::intrnl::Color tint = {}) const;
 
         std::weak_ptr<logic::Entity> model_;
 
@@ -126,6 +124,6 @@ namespace bomberman::view {
     private:
         std::vector<std::shared_ptr<EntityView>> views_;
     };
-}
+} // namespace bomberman::view
 
-#endif //BOMBERMAN_VIEW_ENTITYVIEW_H
+#endif // BOMBERMAN_VIEW_ENTITYVIEW_H

@@ -6,7 +6,7 @@
  * Disclaimer:
  *   This file is part of Bomberman.
  *   Unauthorized use, reproduction, or distribution is prohibited.
-***************************************************************/
+ ***************************************************************/
 
 #include "bomberman/logic/ai/Behaviours.h"
 
@@ -41,11 +41,11 @@ namespace bomberman::logic::ai {
             }
             return false;
         }
-    }
+    } // namespace
 
     // ===================== Survive =====================
 
-    std::optional<BotAction> SurviveBehaviour::decide(const BotContext &ctx) const {
+    std::optional<BotAction> SurviveBehaviour::decide(const BotContext& ctx) const {
         if (ctx.danger.safe(ctx.self_cell)) {
             return std::nullopt; // nothing to run from
         }
@@ -57,12 +57,10 @@ namespace bomberman::logic::ai {
         // A refuge is a cell no blast reaches at all - not merely one that
         // burns later than this one. Running from a two-second fuse into a
         // three-second fuse buys a second and then dies anyway.
-        const auto is_refuge = [&ctx](const TilePos& cell) {
-            return cell != ctx.self_cell && ctx.danger.safe(cell);
-        };
+        const auto is_refuge = [&ctx](const TilePos& cell) { return cell != ctx.self_cell && ctx.danger.safe(cell); };
 
-        const std::optional<TilePos> refuge = PathFinder::find_nearest(
-            ctx.grid, ctx.self_cell, passable, is_refuge, refuge_search_depth);
+        const std::optional<TilePos> refuge =
+            PathFinder::find_nearest(ctx.grid, ctx.self_cell, passable, is_refuge, refuge_search_depth);
 
         if (refuge.has_value()) {
             const Direction step = PathFinder::first_step(ctx.grid, ctx.self_cell, *refuge, passable);
@@ -104,11 +102,9 @@ namespace bomberman::logic::ai {
 
     // ===================== Collect =====================
 
-    CollectPowerUpBehaviour::CollectPowerUpBehaviour(const int search_radius)
-        : search_radius_(search_radius) {
-    }
+    CollectPowerUpBehaviour::CollectPowerUpBehaviour(const int search_radius) : search_radius_(search_radius) {}
 
-    std::optional<BotAction> CollectPowerUpBehaviour::decide(const BotContext &ctx) const {
+    std::optional<BotAction> CollectPowerUpBehaviour::decide(const BotContext& ctx) const {
         const PowerUp* best = nullptr;
         int best_distance = 0;
         TilePos best_cell{};
@@ -143,11 +139,9 @@ namespace bomberman::logic::ai {
 
     // ===================== Break blocks =====================
 
-    BreakBlocksBehaviour::BreakBlocksBehaviour(const int search_radius)
-        : search_radius_(search_radius) {
-    }
+    BreakBlocksBehaviour::BreakBlocksBehaviour(const int search_radius) : search_radius_(search_radius) {}
 
-    std::optional<BotAction> BreakBlocksBehaviour::decide(const BotContext &ctx) const {
+    std::optional<BotAction> BreakBlocksBehaviour::decide(const BotContext& ctx) const {
         if (!ctx.self.can_place_bomb()) {
             return std::nullopt; // no bomb to spare; let another goal decide
         }
@@ -166,8 +160,8 @@ namespace bomberman::logic::ai {
         const auto passable = passable_and_survivable(ctx, ctx.self_cell, ctx.danger);
         const auto goal = [&ctx](const TilePos& cell) { return touches_block(ctx.grid, cell); };
 
-        const std::optional<TilePos> target = PathFinder::find_nearest(
-            ctx.grid, ctx.self_cell, passable, goal, search_radius_);
+        const std::optional<TilePos> target =
+            PathFinder::find_nearest(ctx.grid, ctx.self_cell, passable, goal, search_radius_);
 
         if (!target.has_value()) {
             return std::nullopt;
@@ -183,11 +177,10 @@ namespace bomberman::logic::ai {
 
     // ===================== Hunt =====================
 
-    HuntBehaviour::HuntBehaviour(const int engage_radius) : engage_radius_(engage_radius) {
-    }
+    HuntBehaviour::HuntBehaviour(const int engage_radius) : engage_radius_(engage_radius) {}
 
-    bool HuntBehaviour::in_blast_line(const BotContext &ctx, const TilePos &from,
-                                      const TilePos &target, const unsigned int radius) {
+    bool HuntBehaviour::in_blast_line(const BotContext& ctx, const TilePos& from, const TilePos& target,
+                                      const unsigned int radius) {
         if (from.row != target.row && from.col != target.col) {
             return false;
         }
@@ -221,7 +214,7 @@ namespace bomberman::logic::ai {
         return true;
     }
 
-    std::optional<BotAction> HuntBehaviour::decide(const BotContext &ctx) const {
+    std::optional<BotAction> HuntBehaviour::decide(const BotContext& ctx) const {
         const Character* enemy = ctx.nearest_enemy();
         if (enemy == nullptr) {
             return std::nullopt;
@@ -241,8 +234,7 @@ namespace bomberman::logic::ai {
         }
 
         // In line and in range: take the shot, if there is a way out.
-        if (ctx.self.can_place_bomb() &&
-            in_blast_line(ctx, ctx.self_cell, *enemy_cell, ctx.self.blast_radius())) {
+        if (ctx.self.can_place_bomb() && in_blast_line(ctx, ctx.self_cell, *enemy_cell, ctx.self.blast_radius())) {
             const Direction escape = escape_after_bomb(ctx, ctx.self_cell);
             if (escape != Direction::None) {
                 return BotAction{escape, true, name()};
@@ -259,7 +251,7 @@ namespace bomberman::logic::ai {
 
     // ===================== Wander =====================
 
-    std::optional<BotAction> WanderBehaviour::decide(const BotContext &ctx) const {
+    std::optional<BotAction> WanderBehaviour::decide(const BotContext& ctx) const {
         std::vector<Direction> viable;
         viable.reserve(direction_count);
 
@@ -280,8 +272,7 @@ namespace bomberman::logic::ai {
         const Direction current = ctx.self.direction();
         if (current != Direction::None && viable.size() > 1) {
             const Direction back = opposite(current);
-            if (std::find(viable.begin(), viable.end(), current) != viable.end()
-                && sif::intrnl::rand_chance(0.7f)) {
+            if (std::find(viable.begin(), viable.end(), current) != viable.end() && sif::intrnl::rand_chance(0.7f)) {
                 return BotAction{current, false, name()};
             }
             std::erase(viable, back);
@@ -292,4 +283,4 @@ namespace bomberman::logic::ai {
         const Direction chosen = viable[sif::intrnl::rand_index(viable.size())];
         return BotAction{chosen, false, name()};
     }
-}
+} // namespace bomberman::logic::ai

@@ -6,7 +6,7 @@
  * Disclaimer:
  *   This file is part of Bomberman.
  *   Unauthorized use, reproduction, or distribution is prohibited.
-***************************************************************/
+ ***************************************************************/
 #ifndef BOMBERMAN_LOGIC_SCORE_H
 #define BOMBERMAN_LOGIC_SCORE_H
 
@@ -49,8 +49,7 @@ namespace bomberman::logic {
      */
     class Score final : public sif::event::Observer {
     public:
-        explicit Score(const std::shared_ptr<sif::event::Event_Bus>& world_bus,
-                       ScoreRules rules = {});
+        explicit Score(const std::shared_ptr<sif::event::Event_Bus>& world_bus, ScoreRules rules = {});
 
         [[nodiscard]] int points() const;
 
@@ -73,6 +72,6 @@ namespace bomberman::logic {
         int power_ups_taken_ = 0;
         int enemies_killed_ = 0;
     };
-}
+} // namespace bomberman::logic
 
-#endif //BOMBERMAN_LOGIC_SCORE_H
+#endif // BOMBERMAN_LOGIC_SCORE_H

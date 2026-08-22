@@ -11,271 +11,307 @@
 
 | | |
 |---|---|
-| **Автор** | Daniil Sukhovii |
-| **Студентський номер** | s0240228 |
-| **Репозиторій Bomberman** | [Bomberman_2025_2026](https://github.com/sukhoviidaniil/Bomberman_2025_2026) |
-| **Репозиторій sif** | [sif](https://github.com/sukhoviidaniil/sif) |
+| **Author** | Daniil Sukhovii |
+| **Student number** | s0240228 |
+| **Bomberman repository** | [Bomberman_2025_2026](https://github.com/sukhoviidaniil/Bomberman_2025_2026) |
+| **sif repository** | [sif](https://github.com/sukhoviidaniil/sif) |
 
-Цей звіт стосується двох репозиторіїв: власне гри Bomberman, та sif - невеликого
-рушія (система ассетів, XML-орієнтований UI, конвеєр рендеру, аудіо), який
-розроблявся паралельно з грою і використовується нею як залежність. Обидва
-розглядаються тут, бо значна частина архітектурної роботи відбувалась саме в sif,
-а не лише в самій грі.
+This report covers two repositories: the Bomberman game itself, and sif - a small engine
+(asset system, XML-oriented UI, render pipeline, audio) that was developed alongside the
+game and is used by it as a dependency. Both are discussed here because a significant part
+of the architectural work happened in sif itself, not only in the game.
 
 ---
 
 ## 1. Architecture overview
 
-Я вибрав поділити код на дві частини: частину logic/, та частину view/.
-Частина logic/ диктує яким чином проходить гра, її логіку, правила гри та поведінку ботів.
-Частина logic/ ніколи не задає як гра репрезентується, як її бачить користувач чи як він задає той чи інший крок свого персонажа.
+I chose to split the code into two parts: the logic/ part and the view/ part.
+The logic/ part dictates how the game runs, its rules, and bot behaviour.
+The logic/ part never dictates how the game is represented, how the user sees it, or how
+they input a given step of their character.
 
-На відмінно від цього частина view/, нічого не знає про конкретні правила гри, яким чином рухаються фігури на дошці.
-Частина view/ диктує лише який зараз активний стан програми, як виглядає гра для користувача.
-Частина view/ також формально не знає про SFML - всі дії з самим SFML виконує sif, а view/ лише використовує sif.
-Це прямо дає можливість замінити не лише версію SFML, але і перевести проект на інших рушій без жодної зміни в обох частин. 
+In contrast, the view/ part knows nothing about the specific rules of the game, or how the
+pieces move on the board. The view/ part only dictates what the current active state of
+the program is, i.e. what the game looks like to the user. The view/ part also formally
+knows nothing about SFML - all interaction with SFML itself is done by sif, and view/ only
+uses sif. This directly makes it possible to replace not only the SFML version, but to
+port the project to a different engine entirely, without any change in either part.
 
-![Діаграма класів logic/ - World, сутності, ScoreBoard, IEntityFactory, TileGrid](uml/logic.png)
-*Класи logic/: World як контролер, ієрархія Entity, IEntityFactory та Score/ScoreBoard.*
+![Class diagram of logic/ - World, entities, ScoreBoard, IEntityFactory, TileGrid](uml/logic.png)
 
-![Діаграма класів view/ - State, EntityView, SFMLEntityFactory, Game](uml/view.png)
-*Класи view/: стек станів (StateManager), ієрархія EntityView та конкретна фабрика.*
+*Classes of logic/: `World` as the controller, the `Entity` hierarchy, `IEntityFactory`, and `Score`/`ScoreBoard`.*
 
-Прямий факт, а не лише намір: у Bomberman є окрема опція збірки `BOMBERMAN_BUILD_VIEW`.
-Коли вона вимкнена (`-DBOMBERMAN_BUILD_VIEW=OFF`), CMake взагалі не заходить у view/ під
-час конфігурації - а не просто "не білдить" його. Це важливо саме тому, що CMake обробляє
-все дерево CMakeLists.txt на етапі конфігурації незалежно від того, яку ціль потім
-попросять зібрати - тож єдиний спосіб довести незалежність logic/ від SFML напевно - це
-щоб SFML в принципі не міг бути знайдений чи завантажений у такій конфігурації. Це
-перевіряється окремим CI-джобом (`logic`), який ставить систему без SFML взагалі і
-конфігурує проект саме з цим прапорцем - якщо raз збірка проходить, а SFML ніде навіть не
-згадується в логах, це і є доказ.
+![Class diagram of view/ - State, EntityView, SFMLEntityFactory, Game](uml/view.png)
 
-Я вибрав створити окремий репозиторія для System Infrastructure Framework (it is
-subsequently referred to as SIF or sif), для того щоб:
+*Classes of view/: the state stack (`StateManager`), the `EntityView` hierarchy, and the concrete factory.*
 
-- винесення інфраструктурного шару в загальну бібліотеку, що дає можливість використання
-  цього шару як базу для інших проектів, а не лише для Bomberman;
-- ізоляція Графічного Рушія від основного коду;
-- узагальнення способу отримання ассетів, не залежно від Графічної Бібліотеки чи
-  Бібліотеки звуку;
-- узагальнення способі презентації середовища для презентації ассетів;
-- чіткий контроль над ативацією, передачею, та життям ассетів;
-- створення простого способу для створення нових сцен та модифікацій вже існуючи -
-  XML формат.
+A direct fact, not just an intention: Bomberman has a separate build option,
+`BOMBERMAN_BUILD_VIEW`. When it is off (`-DBOMBERMAN_BUILD_VIEW=OFF`), CMake does not enter
+view/ during configuration at all - not merely "does not build" it. This matters precisely
+because CMake processes the whole CMakeLists.txt tree at the configuration stage,
+regardless of which target is later asked to be built - so the only way to prove logic/'s
+independence from SFML for certain is for SFML to be impossible to find or load at all in
+that configuration. This is checked by a separate CI job (`logic`), which sets up a system
+with no SFML at all and configures the project with exactly this flag - if the build passes
+even once and SFML is never even mentioned in the logs, that is the proof.
+
+I chose to create a separate repository for the System Infrastructure Framework (it is
+subsequently referred to as SIF or sif), for the following reasons:
+
+- extracting the infrastructure layer into a general-purpose library, which makes it
+  possible to use this layer as a base for other projects, not only for Bomberman;
+- isolating the graphics engine from the core code;
+- generalising the way assets are obtained, independent of the graphics library or the
+  audio library;
+- generalising the way the environment presents assets;
+- clear control over the activation, transfer, and lifetime of assets;
+- creating a simple way to create new scenes and modify existing ones - an XML format.
 
 ---
 
 ## 2. Design patterns
 
-![Діаграма чотирьох патернів - MVC, Observer, Abstract Factory, Singleton - з ролями учасників](uml/patterns.png)
-*Всі чотири патерни разом, лише з учасниками та їх ролями.*
+![Diagram of the four patterns - MVC, Observer, Abstract Factory, Singleton - with participant roles](uml/patterns.png)
+*All four patterns together, showing only the participants and their roles.*
 
 ### MVC
 
-logic::World грає роль контролера - саме він створює й знищує сутності, вирішує що
-відбувається при зіткненні бомби з персонажем, рухає боти через AI. World ніколи не малює
-нічого і взагалі не знає про існування view-шару - у нього немає жодного поля типу
-sf::Something чи навіть sif::rnd::Something. Моделлю є підкласи logic::Entity (Character,
-Bomb, Explosion, PowerUp) - вони тримають дані (позиція, стан, статистики) і мають
-методи для їх зміни, але не мають уявлення про те, як вони виглядають на екрані. View -
-це підкласи view::EntityView (CharacterView, BombView, ExplosionView, PowerUpView) - вони
-знають лише як намалювати поточний стан моделі, і отримують цей стан через Observer
-(нижче), а не питаючи модель напряму щокадру.
+`logic::World` plays the role of the controller - it is the one that creates and destroys
+entities, decides what happens when a bomb collides with a character, and moves the bots
+through AI. `World` never draws anything and does not even know that the view layer exists
+- it does not have a single field of type `sf::Something`, or even `sif::rnd::Something`.
+The model is the subclasses of `logic::Entity` (`Character`, `Bomb`, `Explosion`,
+`PowerUp`) - they hold data (position, state, statistics) and have methods to change it,
+but have no notion of how they look on screen. The View is the subclasses of
+`view::EntityView` (`CharacterView`, `BombView`, `ExplosionView`, `PowerUpView`) - they
+only know how to draw the current state of the model, and they receive that state through
+Observer (below), rather than polling the model directly every frame.
 
 ### Observer
 
-Конкретно в цьому проекті найбільш значущим використанням є трійця класів: view::EntityView, logic::Score, view::AudioDirector.
-view::EntityView слідкує за конкретним sif::event::Event_Bus що є в кожного logic::Entity, щоб слідкувати за такими речами як направлення, стан обьекта, кількість секунд до вибуху бомби.
-logic::Score та view::AudioDirector навідмінно від цього слідкують за sif::event::Event_Bus всього logic::World - вони не привязані до якогось конкретного обьєкта в грі, а слідкуючть за всією грою.
+Specifically in this project, the most significant use is a trio of classes:
+`view::EntityView`, `logic::Score`, `view::AudioDirector`.
+`view::EntityView` observes the specific `sif::event::Event_Bus` that every `logic::Entity`
+has, to track things such as direction, object state, and the seconds remaining until a
+bomb explodes.
+`logic::Score` and `view::AudioDirector`, in contrast, observe the `sif::event::Event_Bus`
+of the whole `logic::World` - they are not tied to any specific object in the game, and
+instead observe the entire game.
 
-Реальним прикладом такого використання може слугувати ланцюжок подій якщо один з ботів помре.
-При смерті бот кине у свій sif::event::Event_Bus факт своєї смерті.
-Це івент спіймає відповідний view::EntityView та почне програвати анімацію смерті - бот не знає що його показують графічно.
-logic::World в свою чергу теж кине узагальнений евент про смерть бота в свій sif::event::Event_Bus.
-Цей евент спіймає logic::Score та а view::AudioDirector.
-logic::Score відповідно обчислить кількість балів нарахованих за таку подію в logic::World - logic::World нічого не знає про те що його "оцінюють".
-view::AudioDirector відповідно вибере програти звук смерті - logic::World нічого не знає що до світу є звукові ефекти.
-
+A real example of this use is the chain of events when one of the bots dies.
+On death, the bot throws the fact of its own death onto its own `sif::event::Event_Bus`.
+The matching `view::EntityView` catches this event and starts playing the death animation -
+the bot itself has no idea it is being shown graphically.
+`logic::World`, in turn, also throws a generalised event about the bot's death onto its own
+`sif::event::Event_Bus`.
+This event is caught by `logic::Score` and `view::AudioDirector`.
+`logic::Score` accordingly computes the number of points awarded for this event in
+`logic::World` - `logic::World` has no idea it is being "scored".
+`view::AudioDirector` accordingly chooses to play the death sound - `logic::World` has no
+idea the world even has sound effects.
 
 ### Abstract Factory
 
-Інтерфейс logic::IEntityFactory лежить у logic/ і оголошує make_character/make_bomb/
-make_explosion/make_power_up. Конкретна реалізація, view::SFMLEntityFactory, лежить у
-view/ - вона створює модель (наприклад logic::Bomb) і одразу створює відповідний
-view::BombView, підписуючи його на sif::event::Event_Bus щойно створеної моделі. World
-отримує вже готову модель і не має уявлення, що при цьому паралельно з'явився й view.
-Це саме та властивість, яка дозволяє мати другу, "безголову" реалізацію -
-logic::HeadlessEntityFactory - яка створює лише моделі без жодного view. Завдяки цьому
-кожен тест у test/ може прогнати цілий раунд гри (World::update, зіткнення, вибухи,
-AI ботів) без відкриття вікна і без SFML - HeadlessEntityFactory використовується в усіх
-87 тестах.
+The interface `logic::IEntityFactory` lives in logic/ and declares make_character/make_bomb/
+make_explosion/make_power_up. The concrete implementation, `view::SFMLEntityFactory`, lives
+in view/ - it creates the model (for example `logic::Bomb`) and immediately creates the
+matching `view::BombView`, subscribing it to the `sif::event::Event_Bus` of the model just
+created. `World` receives an already-complete model and has no idea that a view was
+created alongside it. This is exactly the property that makes it possible to have a second,
+"headless" implementation - `logic::HeadlessEntityFactory` - which creates only models with
+no view at all. Thanks to this, every test in test/ can run a whole round of the game
+(`World::update`, collisions, explosions, bot AI) without opening a window and without
+SFML - `HeadlessEntityFactory` is used in all 87 tests.
 
 ### Singleton
 
-Цей патерн грає найбільшу роль саме в sif - sif::intrnl::Random та sif::intrnl::Delta_Timer.
-Особливо важливим є саме sif::intrnl::Random, бо випадкові числа створюються на багатьох рівнях проекту.
-Завдяки цьому патерну нам також вдається зв'язати всі виклики sif::intrnl::Random одним ключем.
-Це особливо важливо для тестування, бо ключ sif::intrnl::Random дає можливість до очікуваних та повторюваних тестів.
+This pattern plays its largest role specifically inside sif - `sif::intrnl::Random` and
+`sif::intrnl::Delta_Timer`. `sif::intrnl::Random` in particular is especially important,
+because random numbers are generated at many levels of the project. Thanks to this pattern,
+we are also able to tie every call to `sif::intrnl::Random` to one single key. This is
+especially important for testing, because the `sif::intrnl::Random` key is what makes
+expected, repeatable
+tests possible.
 
 ---
 
 ## 3. The bot AI
 
-AI бота побудований як ланцюг пріоритетів (BotBrain + BotBehaviour), а не як
-скінченний автомат станів. Причина в тому, як саме сформульоване завдання: "if a bomb is
+The bot AI is built as a priority chain (`BotBrain` + `BotBehaviour`), rather than as a
+finite state machine. The reason lies in how the assignment itself is worded: "if a bomb is
 going to blow them up, they should run to safety", "if any power-ups are in their range,
-try to pick them up" і так далі - це список умов, які треба перевіряти щоразу заново, а
-не список станів з чіткими переходами між ними. У FSM довелось би явно описувати перехід
-з кожного стану в кожен інший (що робити, якщо бот "збирає бонус" і раптом поруч
-з'явилась бомба?) - у ланцюга пріоритетів це не проблема: BotBrain просто питає кожну
-behaviour по черзі (SurviveBehaviour, потім залежно від особистості бота - HuntBehaviour
-чи CollectPowerUpBehaviour - потім BreakBlocksBehaviour, і завжди WanderBehaviour
-останньою) і бере першу відповідь, яка не nullopt. "Особистість" бота (BotPersonality:
-balanced/aggressive/collector) - це просто інший порядок цих же behaviours, без жодного
-нового коду - саме такий бонус описаний в завданні ("give each bot their own
-personality").
+try to pick them up", and so on - this is a list of conditions that have to be re-checked
+every time, not a list of states with clearly defined transitions between them. In an FSM,
+one would have to explicitly describe the transition from every state into every other
+state (what should happen if a bot is "collecting a power-up" and a bomb suddenly appears
+nearby?) - in a priority chain this is not a problem: `BotBrain` simply asks each behaviour
+in turn (`SurviveBehaviour`, then depending on the bot's personality - `HuntBehaviour` or
+`CollectPowerUpBehaviour` - then `BreakBlocksBehaviour`, and always `WanderBehaviour` last)
+and takes the first answer that is not nullopt. A bot's "personality" (`BotPersonality`:
+balanced/aggressive/collector) is simply a different ordering of these same behaviours,
+with no new code at all - this is exactly the bonus described in the assignment ("give each
+bot their own personality").
 
-DangerMap - це структура, яка на кожен тик перебудовується з живих бомб і відповідає на
-питання "через скільки секунд ця клітинка загориться" (нескінченність, якщо ніколи).
-Важливо, що DangerMap враховує не лише бомби, а й уже палаючі вибухи - спочатку я
-рахував лише бомби, і саме це стало причиною бага, описаного нижче.
+`DangerMap` is a structure that is rebuilt every tick from the live bombs and answers the
+question "in how many seconds will this cell catch fire" (infinity, if never). It matters
+that `DangerMap` accounts not only for bombs, but also for explosions already burning -
+initially I only counted bombs, and this is exactly what caused the bug described below.
 
-Конкретний сценарій: бот стоїть на клітинці, поруч з якою за секунду вибухне бомба, а за
-дві клітинки лежить power-up. SurviveBehaviour перевіряється першою і бачить, що власна
-клітинка бота небезпечна (danger.safe(self_cell) == false) - вона шукає найближчу
-клітинку, яку вогонь не дістане, і повертає напрямок туди. CollectPowerUpBehaviour
-взагалі не встигає спрацювати, бо BotBrain зупиняється на першій ненульовій відповіді.
-Якби бот замість цього побіг за бонусом, це виглядало б як явний баг AI - і саме таку
-поведінку я одного разу й спостерігав, поки не виправив DangerMap (нижче).
+A concrete scenario: a bot is standing on a cell, next to which a bomb will explode in a
+second, and a power-up lies two cells away. `SurviveBehaviour` is checked first and sees
+that the bot's own cell is unsafe (`danger.safe(self_cell) == false`) - it searches for the
+nearest cell the fire will not reach, and returns the direction there.
+`CollectPowerUpBehaviour` never even gets a chance to fire, because `BotBrain` stops at the
+first non-null answer. Had the bot run for the bonus instead, that would have looked like a
+clear AI bug - and I did in fact observe exactly that behaviour once, until I fixed
+`DangerMap` (below).
 
-**Два реальні баги, знайдені під час розробки AI:**
+**Two real bugs found while developing the AI:**
 
-> **Баг 1 - боти вбивали самі себе.** Боти вбивали самі себе власними бомбами буквально
-> в перші секунди кожного раунду. DangerMap на той момент рахувала небезпечними лише
-> клітинки в радіусі бомб, які ще тікають - але не клітинки, де вогонь уже горить. Бот
-> ставив бомбу, вважав що втік (бо DangerMap показувала його нову клітинку як безпечну),
-> а насправді ця клітинка вже горіла від вибуху, який стався мілісекундами раніше в тому
-> ж кадрі. **Виправлення** - додати до DangerMap ще й живі `logic::Explosion`, не лише
-> `logic::Bomb`.
+> **Bug 1 - bots were killing themselves.** Bots were killing themselves with their own
+> bombs literally within the first seconds of every round. At that point, `DangerMap`
+> counted as dangerous only the cells within a bomb's radius that were still ticking down -
+> but not the cells where fire was already burning. A bot would place a bomb, believe it
+> had escaped (because `DangerMap` showed its new cell as safe), when in reality that cell
+> was already on fire from a blast that had happened milliseconds earlier in that same
+> frame. **The fix** - add live `logic::Explosion` entities to `DangerMap` as well, not
+> only `logic::Bomb`.
 
-> **Баг 2 - маршрут утечі проходив крізь вогонь.** Після першого виправлення боти все
-> одно іноді гинули - цього разу тому, що маршрут до "безпечної" клітинки, знайдений
-> PathFinder, міг проходити крізь клітинку, яка на момент прибуття бота вже встигала
-> загорітись (шлях вважався безпечним лише в момент пошуку, а не в момент фактичного
-> проходження). **Виправлення** - `escape_after_bomb` тепер рахує не просто "чи клітинка
-> безпечна зараз", а "чи клітинка все ще буде безпечною через стільки кроків, скільки бот
-> реально туди йтиме", використовуючи його ж швидкість.
+> **Bug 2 - the escape route ran straight through fire.** After the first fix, bots still
+> sometimes died - this time because the route to a "safe" cell found by `PathFinder` could
+> pass through a cell that would have caught fire by the time the bot actually arrived there
+> (the path was judged safe only at the moment it was searched for, not at the moment it
+> was actually walked). **The fix** - `escape_after_bomb` now computes not simply "is this
+> cell safe right now", but "will this cell still be safe after as many steps as it will
+> actually take the bot to get there", using the bot's own speed.
 
-![Діаграма AI ботів - DangerMap, BotBehaviour, п'ять поведінок, BotBrain](uml/ai.png)
-*BotBrain як ланцюг пріоритетів над п'ятьма BotBehaviour, і DangerMap, з якою вони всі звіряються.*
+![Diagram of the bot AI - DangerMap, BotBehaviour, five behaviours, BotBrain](uml/ai.png)
+*`BotBrain` as a priority chain over five `BotBehaviour` implementations, and `DangerMap`, which all of them consult.*
 
 ---
 
 ## 4. Notable technical decisions
 
-**Нормалізований світ.** Світ гри нормалізований до координат [-1, 1] замість пікселів. sif::rnd::Camera окремо
-проєктує ці координати у пікселі екрана з політикою Fit, тому змінити роздільну здатність
-вікна чи навіть співвідношення сторін ніяк не впливає на логіку гри - жодна константа
-швидкості чи розміру не прив'язана до конкретного розміру тайла в пікселях.
+**A normalized world.** The game world is normalized to [-1, 1] coordinates instead of
+pixels. `sif::rnd::Camera` separately projects these coordinates onto screen pixels using
+the Fit policy, so changing the window's resolution, or even its aspect ratio, has no
+effect on the game's logic at all - no speed or size constant is tied to a specific tile
+size in pixels.
 
-**`weak_ptr` проти `shared_ptr`.** logic::Bomb тримає std::weak_ptr на персонажа, що її поставив, тоді як logic::World тримає
-std::shared_ptr на кожну сутність, якою володіє. Причина - бомба може пережити свого
-власника (гравець може підірватися власною бомбою вже після смерті), і weak_ptr тут не
-дає бомбі штучно продовжувати життя персонажа, якого вже немає. World, навпаки,
-дійсно володіє кожною сутністю - якщо World перестане існувати, всі сутності мають
-зникнути разом з ним, тому там shared_ptr - правильне, а не випадкове рішення.
+**`weak_ptr` versus `shared_ptr`.** `logic::Bomb` holds a `std::weak_ptr` to the character
+that placed it, whereas `logic::World` holds a `std::shared_ptr` to every entity it owns.
+The reason - a bomb can outlive its owner (a player can blow themselves up with their own
+bomb after already being dead), and `weak_ptr` here does not let the bomb artificially
+extend the lifetime of a character that no longer exists. `World`, by contrast, genuinely
+owns every entity - if `World` ceases to exist, every entity must disappear along with it,
+so `shared_ptr` there is the correct choice, not an arbitrary one.
 
-**Відкладені переходи станів.** Переходи між станами (view::StateManager: push/pop) не застосовуються одразу в момент
-виклику, а складаються в чергу і застосовуються в кінці кадру. Якщо, наприклад,
-LevelState вирішує запушити SaveScoreState прямо всередині свого ж update(), а перехід
-відбувся б негайно - LevelState міг би бути знищений (чи його стек викликів зіпсований)
-ще до того, як його власний update() закінчив виконуватись. Відкладена черга уникає цього
-класу помилок.
+**Deferred state transitions.** Transitions between states (`view::StateManager`: push/pop)
+are not applied immediately at the moment they are requested; instead they are queued and
+applied at the end of the frame. If, for example, `LevelState` decides to push
+`SaveScoreState` from directly inside its own `update()`, and the transition happened
+immediately - `LevelState` could be destroyed (or have its own call stack corrupted) before
+its own `update()` had finished executing. The deferred queue avoids this whole class of
+bugs.
 
-**Похибка float у Score.** У logic::Score є константа tolerance при підрахунку цілих секунд виживання. Причина
-суто числова: 60 кадрів по 1/60 секунди в сумі дають не рівно 1.0, а 0.99999994f через
-похибку float. Без tolerance гравець втрачав би одну секунду нарахування приблизно раз
-на хвилину гри - баг, який спершу виглядав як "рахунок іноді відстає", а виявився
-класичною похибкою накопичення float.
+**A float precision bug in `Score`.** `logic::Score` has a `tolerance` constant used when
+counting whole seconds of survival. The reason is purely numerical: sixty frames of 1/60 of
+a second do not sum to exactly 1.0, but to 0.99999994f, due to float precision. Without
+`tolerance`, the player would lose one second of scoring roughly once every minute of
+play - a bug that at first looked like "the score sometimes lags", and turned out to be a
+classic case of float accumulation error.
 
 ---
 
 ## 5. Testing
 
-Сам проект Бомбермена містить що найменьше 87 тестів. Це прямо покриває конфігурації,
-power-ups, поведінку ботів, нормалізацію координат світу, нарахування балів. Загалом
-перевіреними є як і частина unit-level behaviour, так і частина end-to-end guards.
+The Bomberman project itself contains at least 87 tests. This directly covers
+configuration, power-ups, bot behaviour, world-coordinate normalisation, and scoring.
+Overall, both unit-level behaviour and end-to-end guards are covered.
 
-Деякі тести були створені саме тому що був знайдений баг і не допрацювання коду.
-Прикладом цього може бути один з тестів в `PowerUpTests.cpp`: я забув додати щит для
-захисту power_up від вибуху який їх і створив цей power_up зі стіни. Без такого тесту
-проблема виглядала абсолютно інакше - power_up здавалося взагалі не з'являлися з блоків.
-Схожий баг був з Мапою Небезпеки - вогонь не зараховувався як небезпеку, і боти
-вирішували вбити себе.
+Some tests were created specifically because a bug, or an unfinished piece of code, was
+found. One example of this is one of the tests in `PowerUpTests.cpp`: I forgot to add a
+shield protecting a power-up from the very explosion that created it by breaking the wall
+it came out of. Without that test, the problem looked completely different - it seemed as
+if power-ups simply never appeared out of blocks at all. A similar bug happened with
+`DangerMap` - fire was not counted as a danger, and bots would decide to kill themselves.
 
 ---
 
 ## 6. Use of AI
 
-Використання Штучного Інтелекта в цьому проекті було в багатьох сферах.
-Напевно найбільш важливу роль ШІ грав саме ДО початку роботи над цим проектом - аналіз повного коду попереднього проекту, Пакмена.
-Це дозволило побачити які моменти були пропущені, які моменти були надлишковими, і дало мені як програмісту зробити висновки не тільки
-про проблеми проекту Пакмена, але і про проблеми (які зараз вирішені) проекту SIF, ще до початку роботи над проектом Бомбермена.
-Штучний Інтелект допоміг проаналізувати помилки знайдені мною, як от лінкування SFML
-та гонки всередині системи SIF- debugging with sanitizer tools, після мого запиту на це.
-Штучний Інтелект допоміг з більшою швидкістю шаблонно переписати описи сцен з C++ до XML - просто перезапис однакової ідеї під інший формат.
-Штучний Інтелект допоміг знайти варіанти ассетів для гри - такий пошук міг значно затягнутися,
-бо це методичний перегляд багатьох сайтів на конкретні ассети.
+Artificial Intelligence was used in this project in many areas. Its probably most important
+role was played specifically BEFORE work on this project even began - analysing the full
+codebase of the previous project, Pac-Man. This made it possible to see which points had
+been missed, which points were redundant, and let me, as a programmer, draw conclusions not
+only about the problems of the Pac-Man project, but also about the problems (now fixed) of
+the SIF project, before work on the Bomberman project had even started.
+Artificial Intelligence helped analyse bugs I had found myself, such as SFML linkage issues
+and race conditions inside the SIF system (debugging with sanitizer tools), after I
+specifically asked for that.
+Artificial Intelligence helped rewrite scene descriptions from C++ into XML more quickly by
+following a template - simply re-expressing the same idea in a different format.
+Artificial Intelligence helped find asset options for the game - such a search could have
+taken a very long time on its own, since it means methodically going through many websites
+looking for specific assets.
 
-Значні помилки були знайдені саме мною, програмістом, але самостійно не помічені ШІ:
+Significant mistakes were found by me, the programmer, specifically, and were not caught by
+the AI on its own:
 
-- не коректність завантаження версії SFML для системи що має одночасно 2.X і 3.X версії;
-- замовчування CI проблеми нестачі json для SIF через `nlohmann-json3-dev`;
-- замовчування проблеми зникнення power-ups від вибуху, перевіряючи лише факт створення та підбору ОКРЕМО а не разом.
+- incorrect loading of the SFML version on a system that has both the 2.X and 3.X versions
+  installed at once;
+- a CI problem being silently papered over - a missing json dependency for SIF worked
+  around with `nlohmann-json3-dev`;
+- the problem of power-ups disappearing in an explosion being silently missed - the tests
+  only checked the fact of creation and the fact of pickup SEPARATELY, not together.
 
-Також були деякі спроби ШІ, які я, як програміст, відмовив чи переробив:
+There were also some attempts by the AI that I, as the programmer, rejected or reworked:
 
-- розробка інструментів для ассетів під егідою проекту Бомбермена - це прямо порушувало
-  архітектурну ціль SIF, принцип Відповідальності;
-- спроба "зменшити" роботу копіюючи файли ассетів - дублювання без логічної цілі;
-- спроба зробити CMake в SIF залежним від виданого користувачем SFML - повна діра 
-для помилок інструментів SIF які залежать від логіки конкретної версії SFML;
-- помилки аналізу CMake для пошуку конкретної версії SFML - знайдено, виправлено, та
-  описано як дві пастки.
+- developing asset tools under the umbrella of the Bomberman project - this directly
+  violated SIF's architectural goal, the Single Responsibility Principle;
+- an attempt to "reduce" the workload by copying asset files - duplication with no logical
+  purpose;
+- an attempt to make SIF's CMake depend on an SFML version supplied by the user - a
+  complete hole for errors in SIF's own tools, which depend on the specifics of one
+  particular SFML version;
+- mistakes in the CMake logic for locating a specific SFML version - found, fixed, and
+  documented as two distinct traps.
 
-Така відмінність, на мою думку, чітко показує що ШІ був використаний як інструмент для аналізу, перефразування, пошуку, рутинної роботи.
+This difference, in my opinion, clearly shows that AI was used as a tool for analysis,
+rephrasing, searching, and routine work.
 
 ---
 
 ## 7. Known limitations
 
-**Накладання елементів у sif.** Одним з помітних лімітів є ліміт SIF - компонувальний двигун не вміє накладати обєкти
-один на одного, тому задник для екрану паузи й екрану завершення раунду досі малюється
-вручну прямим sif::rnd::Rectangle, а не є частиною *.ui.xml сцени.
+**Overlapping elements in sif.** One noticeable limitation - inside SIF itself: the layout
+engine cannot stack elements on top of one another, so the backdrop for the pause screen
+and the round-end screen is still drawn manually as a plain `sif::rnd::Rectangle`, rather
+than being part of a `*.ui.xml` scene.
 
-**Константи поза конфігом.** Кілька констант балансу (наприклад, як часто бот перепланує свою поведінку) досі лежать
-прямо в C++, а не в assets/config.json - на відміну від майже всього іншого (мапа,
-power-up'и, таймінги раунду, ваги рахунку), що вже винесено в конфіг.
+**Constants living outside the config.** A few balance constants (for example, how often a
+bot re-plans its behaviour) still live directly in C++ rather than in
+`assets/config.json` - unlike almost everything else (the map, power-ups, round timings,
+score weights), which has already been moved into the config.
 
-**Розмір світу впливає на релятивну швидкість руху Акторів.** Це прямо випливає з нормалізації світу - якщо збільшити
-кількість клітинок у світі, але не зменшити швидкість руху Акторів, то візуально Актори почнуть рухатися більш швидко.
-Це не є багом, бо швидкість Акторів вже внесена в конфігурацію, і відповідно може бути налаштована користувачем відповідно до бажання чи потреби.
+**World size affects the Actors' relative movement speed.** This follows directly from the
+world's normalization - if the number of cells in the world is increased without also
+reducing the Actors' movement speed, the Actors will visually appear to move faster. This
+is not a bug, since Actor speed is already part of the configuration, and can accordingly
+be tuned by the user to their own preference or need.
 
-**Перемальовування арени щокадру.** Арена перемальовується заново щокадру, хоча змінюється лише коли зникає блок - це
-лише питання продуктивності, непомітне на розмірах цієї гри, і не впливає на коректність.
+**Redrawing the arena every frame.** The arena is redrawn from scratch every frame, even
+though it only actually changes when a block disappears - this is purely a performance
+question, invisible at this game's scale, and does not affect correctness.
 
 ---
 
 ## 8. Bonus features, if claiming any
 
-**Особистості ботів.** `logic::ai::BotPersonality` (balanced/aggressive/collector) - прямо
-той бонус, який описаний у завданні ("give each bot their own personality"): це той
-самий priority chain поведінок, лише в іншому порядку для кожного типу.
+**Bot personalities.** `logic::ai::BotPersonality` (balanced/aggressive/collector) is
+exactly the bonus described in the assignment ("give each bot their own personality"): it
+is the very same priority chain of behaviours, just in a different order for each type.
 
-**Звук.** `view::AudioDirector` реагує на ігрові події (вибух, підбір бонусу, смерть,
-перемога/поразка) через ту саму Observer-шину, якою користується logic::Score - жодних
-прямих викликів з логіки гри в аудіо-код.
-
----
-
+**Sound.** `view::AudioDirector` reacts to gameplay events (explosion, power-up pickup,
+death, win/loss) through the very same Observer bus that `logic::Score` uses - no direct
+calls from the game logic into the audio code anywhere.

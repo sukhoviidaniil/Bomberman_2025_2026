@@ -6,7 +6,7 @@
  * Disclaimer:
  *   This file is part of Bomberman.
  *   Unauthorized use, reproduction, or distribution is prohibited.
-***************************************************************/
+ ***************************************************************/
 #ifndef BOMBERMAN_LOGIC_ENTITY_H
 #define BOMBERMAN_LOGIC_ENTITY_H
 
@@ -94,6 +94,6 @@ namespace bomberman::logic {
 
         std::shared_ptr<sif::event::Event_Bus> bus_ = std::make_shared<sif::event::Event_Bus>();
     };
-}
+} // namespace bomberman::logic
 
-#endif //BOMBERMAN_LOGIC_ENTITY_H
+#endif // BOMBERMAN_LOGIC_ENTITY_H

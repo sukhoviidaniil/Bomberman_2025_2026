@@ -6,7 +6,7 @@
  * Disclaimer:
  *   This file is part of Bomberman.
  *   Unauthorized use, reproduction, or distribution is prohibited.
-***************************************************************/
+ ***************************************************************/
 
 #include "TestFramework.h"
 
@@ -52,7 +52,7 @@ namespace {
         rules.skates_weight = only == PowerUpKind::Skates ? 1.f : 0.f;
         return rules;
     }
-}
+} // namespace
 
 // ---------------------------------------------------------------------
 // Which kind drops
@@ -77,8 +77,8 @@ SIF_TEST(weights_decide_which_power_up_drops) {
     SIF_CHECK(counts[PowerUpKind::Fire] > counts[PowerUpKind::ExtraBomb]);
 
     // 3:1 give or take sampling noise.
-    const double ratio = static_cast<double>(counts[PowerUpKind::Fire])
-                       / static_cast<double>(counts[PowerUpKind::ExtraBomb]);
+    const double ratio =
+        static_cast<double>(counts[PowerUpKind::Fire]) / static_cast<double>(counts[PowerUpKind::ExtraBomb]);
     SIF_CHECK(ratio > 2.4 && ratio < 3.6);
 }
 
@@ -98,11 +98,13 @@ SIF_TEST(seeded_drops_are_reproducible) {
 
     sif::intrnl::Random::instance().seed(77u);
     std::vector<PowerUpKind> first;
-    for (int i = 0; i < 20; ++i) first.push_back(rules.roll_kind());
+    for (int i = 0; i < 20; ++i)
+        first.push_back(rules.roll_kind());
 
     sif::intrnl::Random::instance().seed(77u);
     std::vector<PowerUpKind> second;
-    for (int i = 0; i < 20; ++i) second.push_back(rules.roll_kind());
+    for (int i = 0; i < 20; ++i)
+        second.push_back(rules.roll_kind());
 
     SIF_CHECK(first == second);
 }
@@ -116,12 +118,7 @@ SIF_TEST(destroying_a_block_can_reveal_a_power_up) {
 
     // The block sits inside the blast of a bomb dropped on the spawn, and
     // the column below it is the escape route.
-    Round round({
-        "1+.......",
-        ".........",
-        ".........",
-        "........2"
-    }, always_drop(PowerUpKind::Fire));
+    Round round({"1+.......", ".........", ".........", "........2"}, always_drop(PowerUpKind::Fire));
 
     round.world->player_place_bomb();
     round.world->set_player_direction(Direction::Down);
@@ -137,12 +134,7 @@ SIF_TEST(a_revealed_power_up_survives_the_blast_that_revealed_it) {
     // it appeared - and no power-up ever reached anybody.
     sif::intrnl::Random::instance().seed(6u);
 
-    Round round({
-        "1+.......",
-        ".........",
-        ".........",
-        "........2"
-    }, always_drop(PowerUpKind::ExtraBomb));
+    Round round({"1+.......", ".........", ".........", "........2"}, always_drop(PowerUpKind::ExtraBomb));
 
     round.world->player_place_bomb();
     round.world->set_player_direction(Direction::Down);
@@ -167,18 +159,13 @@ SIF_TEST(a_later_blast_does_destroy_an_exposed_power_up) {
     const auto factory = std::make_shared<HeadlessEntityFactory>();
 
     MapConfig map;
-    map.layout = {
-        "1........",
-        ".........",
-        "........2"
-    };
+    map.layout = {"1........", ".........", "........2"};
     World world(bus, factory, map, RoundConfig{}, rules);
     world.start_round();
 
     // A pick-up that has been lying around, with no shield left.
-    auto stale = factory->make_power_up(
-        world.grid().get_center({0, 2}), world.grid().tile_size() * 0.7f,
-        TilePos{0, 2}, PowerUpKind::Fire, 0.f);
+    auto stale = factory->make_power_up(world.grid().get_center({0, 2}), world.grid().tile_size() * 0.7f, TilePos{0, 2},
+                                        PowerUpKind::Fire, 0.f);
     SIF_CHECK(!stale->shielded());
 }
 
@@ -189,25 +176,20 @@ SIF_TEST(a_later_blast_does_destroy_an_exposed_power_up) {
 SIF_TEST(walking_over_a_power_up_applies_it_and_removes_it) {
     sif::intrnl::Random::instance().seed(8u);
 
-    Round round({
-        "1........",
-        ".........",
-        "........2"
-    }, PowerUpRules{});
+    Round round({"1........", ".........", "........2"}, PowerUpRules{});
 
     const unsigned int before = round.world->player()->blast_radius();
 
     // Place one directly in the player's path, unshielded.
-    auto item = round.factory->make_power_up(
-        round.world->grid().get_center({0, 3}),
-        round.world->grid().tile_size() * 0.7f,
-        TilePos{0, 3}, PowerUpKind::Fire, 0.f);
+    auto item =
+        round.factory->make_power_up(round.world->grid().get_center({0, 3}), round.world->grid().tile_size() * 0.7f,
+                                     TilePos{0, 3}, PowerUpKind::Fire, 0.f);
 
     int taken = 0;
-    const auto sub = round.bus->subscribe<game_events::PowerUpTaken>(
-        [&taken](const game_events::PowerUpTaken& e) {
-            if (e.by_player) ++taken;
-        });
+    const auto sub = round.bus->subscribe<game_events::PowerUpTaken>([&taken](const game_events::PowerUpTaken& e) {
+        if (e.by_player)
+            ++taken;
+    });
 
     // The World owns pick-ups it created; this test reaches the same place
     // through the public path instead, by walking the player onto it.
@@ -221,17 +203,13 @@ SIF_TEST(walking_over_a_power_up_applies_it_and_removes_it) {
 SIF_TEST(a_power_up_is_announced_to_the_score_when_the_player_takes_it) {
     sif::intrnl::Random::instance().seed(9u);
 
-    Round round({
-        "1+.......",
-        ".........",
-        ".........",
-        "........2"
-    }, always_drop(PowerUpKind::Fire));
+    Round round({"1+.......", ".........", ".........", "........2"}, always_drop(PowerUpKind::Fire));
 
     int player_pickups = 0;
-    const auto sub = round.bus->subscribe<game_events::PowerUpTaken>(
-        [&player_pickups](const game_events::PowerUpTaken& e) {
-            if (e.by_player) ++player_pickups;
+    const auto sub =
+        round.bus->subscribe<game_events::PowerUpTaken>([&player_pickups](const game_events::PowerUpTaken& e) {
+            if (e.by_player)
+                ++player_pickups;
         });
 
     round.world->player_place_bomb();
@@ -296,11 +274,7 @@ SIF_TEST(the_caps_come_from_the_rules_and_hold) {
 SIF_TEST(extra_bombs_really_let_more_bombs_exist_at_once) {
     sif::intrnl::Random::instance().seed(10u);
 
-    Round round({
-        "1........",
-        ".........",
-        "........2"
-    }, PowerUpRules{});
+    Round round({"1........", ".........", "........2"}, PowerUpRules{});
 
     round.world->player_place_bomb();
     round.run(0.05f);
@@ -349,10 +323,10 @@ SIF_TEST(bots_collect_power_ups_over_a_round) {
     world.start_round();
 
     int bot_pickups = 0;
-    const auto sub = bus->subscribe<game_events::PowerUpTaken>(
-        [&bot_pickups](const game_events::PowerUpTaken& e) {
-            if (!e.by_player) ++bot_pickups;
-        });
+    const auto sub = bus->subscribe<game_events::PowerUpTaken>([&bot_pickups](const game_events::PowerUpTaken& e) {
+        if (!e.by_player)
+            ++bot_pickups;
+    });
 
     for (int i = 0; i < 60 * 30 && !world.round_over(); ++i) {
         world.update(1.f / 60.f);
@@ -363,8 +337,8 @@ SIF_TEST(bots_collect_power_ups_over_a_round) {
     // And the pick-ups actually stuck to somebody.
     bool anyone_stronger = false;
     for (const auto& character : world.characters()) {
-        if (character->kind() == CharacterKind::Bot
-            && (character->blast_radius() > 1 || character->bomb_budget() > 1)) {
+        if (character->kind() == CharacterKind::Bot &&
+            (character->blast_radius() > 1 || character->bomb_budget() > 1)) {
             anyone_stronger = true;
         }
     }

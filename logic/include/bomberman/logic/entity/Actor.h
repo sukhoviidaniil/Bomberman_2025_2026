@@ -6,7 +6,7 @@
  * Disclaimer:
  *   This file is part of Bomberman.
  *   Unauthorized use, reproduction, or distribution is prohibited.
-***************************************************************/
+ ***************************************************************/
 #ifndef BOMBERMAN_LOGIC_ACTOR_H
 #define BOMBERMAN_LOGIC_ACTOR_H
 
@@ -77,6 +77,6 @@ namespace bomberman::logic {
     private:
         void announce_motion(bool moving);
     };
-}
+} // namespace bomberman::logic
 
-#endif //BOMBERMAN_LOGIC_ACTOR_H
+#endif // BOMBERMAN_LOGIC_ACTOR_H

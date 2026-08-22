@@ -6,7 +6,7 @@
  * Disclaimer:
  *   This file is part of Bomberman.
  *   Unauthorized use, reproduction, or distribution is prohibited.
-***************************************************************/
+ ***************************************************************/
 #ifndef BOMBERMAN_LOGIC_AABB_H
 #define BOMBERMAN_LOGIC_AABB_H
 
@@ -54,9 +54,7 @@ namespace bomberman::logic {
         ///
         /// Not constexpr: sif::intrnl::Rect's constructor is not, so
         /// marking this constexpr would only produce a warning.
-        [[nodiscard]] sif::intrnl::Rect to_rect() const {
-            return {left(), top(), half.x * 2.f, half.y * 2.f};
-        }
+        [[nodiscard]] sif::intrnl::Rect to_rect() const { return {left(), top(), half.x * 2.f, half.y * 2.f}; }
 
         [[nodiscard]] constexpr bool contains(const sif::math::Point2 p) const {
             return p.x >= left() && p.x <= right() && p.y >= top() && p.y <= bottom();
@@ -71,8 +69,7 @@ namespace bomberman::logic {
      * would make every neighbour lethal.
      */
     [[nodiscard]] constexpr bool intersects(const AABB& a, const AABB& b) {
-        return a.left() < b.right() && a.right() > b.left()
-            && a.top() < b.bottom() && a.bottom() > b.top();
+        return a.left() < b.right() && a.right() > b.left() && a.top() < b.bottom() && a.bottom() > b.top();
     }
 
     /**
@@ -86,6 +83,6 @@ namespace bomberman::logic {
         const float overlap_y = std::min(a.bottom(), b.bottom()) - std::max(a.top(), b.top());
         return overlap_x > tolerance && overlap_y > tolerance;
     }
-}
+} // namespace bomberman::logic
 
-#endif //BOMBERMAN_LOGIC_AABB_H
+#endif // BOMBERMAN_LOGIC_AABB_H

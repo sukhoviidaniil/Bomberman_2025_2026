@@ -6,7 +6,7 @@
  * Disclaimer:
  *   This file is part of Bomberman.
  *   Unauthorized use, reproduction, or distribution is prohibited.
-***************************************************************/
+ ***************************************************************/
 #ifndef BOMBERMAN_VIEW_ASSETNAMES_H
 #define BOMBERMAN_VIEW_ASSETNAMES_H
 
@@ -59,6 +59,6 @@ namespace bomberman::view::assets {
     inline const std::string sfx_menu = "sfx_menu";
     inline const std::string sfx_victory = "sfx_victory";
     inline const std::string sfx_defeat = "sfx_defeat";
-}
+} // namespace bomberman::view::assets
 
-#endif //BOMBERMAN_VIEW_ASSETNAMES_H
+#endif // BOMBERMAN_VIEW_ASSETNAMES_H

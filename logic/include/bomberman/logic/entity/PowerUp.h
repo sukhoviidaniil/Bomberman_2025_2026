@@ -6,7 +6,7 @@
  * Disclaimer:
  *   This file is part of Bomberman.
  *   Unauthorized use, reproduction, or distribution is prohibited.
-***************************************************************/
+ ***************************************************************/
 #ifndef BOMBERMAN_LOGIC_POWERUP_H
 #define BOMBERMAN_LOGIC_POWERUP_H
 
@@ -35,8 +35,7 @@ namespace bomberman::logic {
          * means "the item appears once the fire clears", which is also how
          * it reads on screen.
          */
-        PowerUp(sif::math::Point2 position, float size, TilePos cell, PowerUpKind kind,
-                float shield_seconds = 0.f);
+        PowerUp(sif::math::Point2 position, float size, TilePos cell, PowerUpKind kind, float shield_seconds = 0.f);
 
         void update(float dt) override;
 
@@ -51,6 +50,6 @@ namespace bomberman::logic {
         PowerUpKind kind_;
         float shield_remaining_ = 0.f;
     };
-}
+} // namespace bomberman::logic
 
-#endif //BOMBERMAN_LOGIC_POWERUP_H
+#endif // BOMBERMAN_LOGIC_POWERUP_H

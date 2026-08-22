@@ -6,7 +6,7 @@
  * Disclaimer:
  *   This file is part of Bomberman.
  *   Unauthorized use, reproduction, or distribution is prohibited.
-***************************************************************/
+ ***************************************************************/
 #ifndef BOMBERMAN_VIEW_SFMLENTITYFACTORY_H
 #define BOMBERMAN_VIEW_SFMLENTITYFACTORY_H
 
@@ -33,26 +33,26 @@ namespace bomberman::view {
     public:
         SFMLEntityFactory(ViewRegistry& views, const GameAssets& assets);
 
-        [[nodiscard]] std::shared_ptr<logic::Character> make_character(
-            logic::CharacterKind kind, sif::math::Point2 position, float size, float speed) override;
+        [[nodiscard]] std::shared_ptr<logic::Character>
+        make_character(logic::CharacterKind kind, sif::math::Point2 position, float size, float speed) override;
 
-        [[nodiscard]] std::shared_ptr<logic::Bomb> make_bomb(
-            sif::math::Point2 position, float size, logic::TilePos cell,
-            std::weak_ptr<logic::Character> owner, unsigned int radius, float fuse_seconds) override;
+        [[nodiscard]] std::shared_ptr<logic::Bomb> make_bomb(sif::math::Point2 position, float size,
+                                                             logic::TilePos cell, std::weak_ptr<logic::Character> owner,
+                                                             unsigned int radius, float fuse_seconds) override;
 
-        [[nodiscard]] std::shared_ptr<logic::Explosion> make_explosion(
-            sif::math::Point2 position, float size, logic::TilePos cell,
-            float lifetime_seconds, bool from_player) override;
+        [[nodiscard]] std::shared_ptr<logic::Explosion> make_explosion(sif::math::Point2 position, float size,
+                                                                       logic::TilePos cell, float lifetime_seconds,
+                                                                       bool from_player) override;
 
-        [[nodiscard]] std::shared_ptr<logic::PowerUp> make_power_up(
-            sif::math::Point2 position, float size, logic::TilePos cell, logic::PowerUpKind kind,
-            float shield_seconds) override;
+        [[nodiscard]] std::shared_ptr<logic::PowerUp> make_power_up(sif::math::Point2 position, float size,
+                                                                    logic::TilePos cell, logic::PowerUpKind kind,
+                                                                    float shield_seconds) override;
 
     private:
         ViewRegistry& views_;
         const GameAssets& assets_;
         std::size_t bots_created_ = 0;
     };
-}
+} // namespace bomberman::view
 
-#endif //BOMBERMAN_VIEW_SFMLENTITYFACTORY_H
+#endif // BOMBERMAN_VIEW_SFMLENTITYFACTORY_H

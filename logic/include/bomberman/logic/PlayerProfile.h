@@ -6,7 +6,7 @@
  * Disclaimer:
  *   This file is part of Bomberman.
  *   Unauthorized use, reproduction, or distribution is prohibited.
-***************************************************************/
+ ***************************************************************/
 #ifndef BOMBERMAN_LOGIC_PLAYERPROFILE_H
 #define BOMBERMAN_LOGIC_PLAYERPROFILE_H
 
@@ -64,6 +64,6 @@ namespace bomberman::logic {
     private:
         std::string name_ = "player";
     };
-}
+} // namespace bomberman::logic
 
-#endif //BOMBERMAN_LOGIC_PLAYERPROFILE_H
+#endif // BOMBERMAN_LOGIC_PLAYERPROFILE_H

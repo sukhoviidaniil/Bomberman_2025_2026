@@ -6,7 +6,7 @@
  * Disclaimer:
  *   This file is part of Bomberman.
  *   Unauthorized use, reproduction, or distribution is prohibited.
-***************************************************************/
+ ***************************************************************/
 
 #include "bomberman/logic/entity/Character.h"
 
@@ -14,13 +14,16 @@
 #include <utility>
 
 namespace bomberman::logic {
-    Character::Character(std::string name, const sif::math::Point2 position, const float size,
-                         const float speed, const CharacterKind kind)
-        : Actor(std::move(name), position, size, speed), kind_(kind) {
-    }
+    Character::Character(std::string name, const sif::math::Point2 position, const float size, const float speed,
+                         const CharacterKind kind)
+        : Actor(std::move(name), position, size, speed), kind_(kind) {}
 
-    CharacterKind Character::kind() const { return kind_; }
-    bool Character::alive() const { return alive_; }
+    CharacterKind Character::kind() const {
+        return kind_;
+    }
+    bool Character::alive() const {
+        return alive_;
+    }
 
     void Character::kill() {
         if (!alive_) {
@@ -31,9 +34,15 @@ namespace bomberman::logic {
         bus_->emit(entity_events::Died{});
     }
 
-    unsigned int Character::blast_radius() const { return blast_radius_; }
-    std::size_t Character::bomb_budget() const { return bomb_budget_; }
-    std::size_t Character::bombs_placed() const { return bombs_placed_; }
+    unsigned int Character::blast_radius() const {
+        return blast_radius_;
+    }
+    std::size_t Character::bomb_budget() const {
+        return bomb_budget_;
+    }
+    std::size_t Character::bombs_placed() const {
+        return bombs_placed_;
+    }
 
     bool Character::can_place_bomb() const {
         return alive_ && bombs_placed_ < bomb_budget_;
@@ -55,32 +64,32 @@ namespace bomberman::logic {
         // uncapped speed lets a character cross a tile faster than the
         // grid-snapping can keep up with.
         switch (kind) {
-            case PowerUpKind::Fire:
-                blast_radius_ = std::min(blast_radius_ + 1, rules_.max_blast_radius);
-                break;
-            case PowerUpKind::ExtraBomb:
-                bomb_budget_ = std::min(bomb_budget_ + 1, rules_.max_bomb_budget);
-                break;
-            case PowerUpKind::Skates:
-                set_speed(std::min(speed() + rules_.skates_speed_bonus, rules_.max_speed));
-                break;
+        case PowerUpKind::Fire:
+            blast_radius_ = std::min(blast_radius_ + 1, rules_.max_blast_radius);
+            break;
+        case PowerUpKind::ExtraBomb:
+            bomb_budget_ = std::min(bomb_budget_ + 1, rules_.max_bomb_budget);
+            break;
+        case PowerUpKind::Skates:
+            set_speed(std::min(speed() + rules_.skates_speed_bonus, rules_.max_speed));
+            break;
         }
     }
 
-    void Character::set_power_up_rules(const PowerUpRules &rules) {
+    void Character::set_power_up_rules(const PowerUpRules& rules) {
         rules_ = rules;
     }
 
-    const PowerUpRules & Character::power_up_rules() const {
+    const PowerUpRules& Character::power_up_rules() const {
         return rules_;
     }
 
-    void Character::allow_leaving(const TilePos &cell) {
+    void Character::allow_leaving(const TilePos& cell) {
         has_pass_cell_ = true;
         pass_cell_ = cell;
     }
 
-    bool Character::may_pass(const TilePos &cell) const {
+    bool Character::may_pass(const TilePos& cell) const {
         return has_pass_cell_ && pass_cell_ == cell;
     }
 
@@ -88,11 +97,11 @@ namespace bomberman::logic {
         has_pass_cell_ = false;
     }
 
-    void Character::set_obstacle_check(std::function<bool(const TilePos &)> check) {
+    void Character::set_obstacle_check(std::function<bool(const TilePos&)> check) {
         obstacle_check_ = std::move(check);
     }
 
-    bool Character::can_enter(const TilePos &cell, const TileGrid &grid) const {
+    bool Character::can_enter(const TilePos& cell, const TileGrid& grid) const {
         if (!Actor::can_enter(cell, grid)) {
             return false;
         }
@@ -103,4 +112,4 @@ namespace bomberman::logic {
         }
         return true;
     }
-}
+} // namespace bomberman::logic

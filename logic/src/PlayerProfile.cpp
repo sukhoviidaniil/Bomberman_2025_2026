@@ -6,7 +6,7 @@
  * Disclaimer:
  *   This file is part of Bomberman.
  *   Unauthorized use, reproduction, or distribution is prohibited.
-***************************************************************/
+ ***************************************************************/
 
 #include "bomberman/logic/PlayerProfile.h"
 
@@ -24,9 +24,9 @@ namespace bomberman::logic {
             value.erase(std::find_if(value.rbegin(), value.rend(), not_space).base(), value.end());
             return value;
         }
-    }
+    } // namespace
 
-    const std::string & PlayerProfile::name() const {
+    const std::string& PlayerProfile::name() const {
         return name_;
     }
 
@@ -63,7 +63,7 @@ namespace bomberman::logic {
         }
     }
 
-    void PlayerProfile::load(const std::string &filepath) {
+    void PlayerProfile::load(const std::string& filepath) {
         if (!std::filesystem::exists(filepath)) {
             return; // first run
         }
@@ -86,7 +86,7 @@ namespace bomberman::logic {
         }
     }
 
-    void PlayerProfile::save(const std::string &filepath) const {
+    void PlayerProfile::save(const std::string& filepath) const {
         nlohmann::json j = nlohmann::json::object();
         j["name"] = name_;
 
@@ -94,4 +94,4 @@ namespace bomberman::logic {
         // renames it, so an interrupted save cannot truncate the profile.
         sif::io::write_json_file(filepath, j);
     }
-}
+} // namespace bomberman::logic

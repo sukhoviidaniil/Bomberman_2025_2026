@@ -6,7 +6,7 @@
  * Disclaimer:
  *   This file is part of Bomberman.
  *   Unauthorized use, reproduction, or distribution is prohibited.
-***************************************************************/
+ ***************************************************************/
 #ifndef BOMBERMAN_LOGIC_BOMB_H
 #define BOMBERMAN_LOGIC_BOMB_H
 
@@ -28,8 +28,8 @@ namespace bomberman::logic {
      */
     class Bomb : public Entity {
     public:
-        Bomb(sif::math::Point2 position, float size, TilePos cell,
-             std::weak_ptr<Character> owner, unsigned int radius, float fuse_seconds);
+        Bomb(sif::math::Point2 position, float size, TilePos cell, std::weak_ptr<Character> owner, unsigned int radius,
+             float fuse_seconds);
 
         void update(float dt) override;
 
@@ -60,6 +60,6 @@ namespace bomberman::logic {
         bool detonated_ = false;
         bool announced_critical_ = false;
     };
-}
+} // namespace bomberman::logic
 
-#endif //BOMBERMAN_LOGIC_BOMB_H
+#endif // BOMBERMAN_LOGIC_BOMB_H

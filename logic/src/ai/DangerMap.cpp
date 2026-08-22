@@ -6,7 +6,7 @@
  * Disclaimer:
  *   This file is part of Bomberman.
  *   Unauthorized use, reproduction, or distribution is prohibited.
-***************************************************************/
+ ***************************************************************/
 
 #include "bomberman/logic/ai/DangerMap.h"
 
@@ -14,9 +14,8 @@
 
 namespace bomberman::logic::ai {
 
-    void DangerMap::rebuild(const TileGrid &grid,
-                            const std::vector<std::shared_ptr<Bomb>> &bombs,
-                            const std::vector<std::shared_ptr<Explosion>> &explosions) {
+    void DangerMap::rebuild(const TileGrid& grid, const std::vector<std::shared_ptr<Bomb>>& bombs,
+                            const std::vector<std::shared_ptr<Explosion>>& explosions) {
         rows_ = static_cast<int>(grid.rows());
         columns_ = static_cast<int>(grid.columns());
         seconds_.assign(static_cast<std::size_t>(rows_ * columns_), never);
@@ -41,15 +40,15 @@ namespace bomberman::logic::ai {
         }
     }
 
-    DangerMap DangerMap::with_bomb(const TileGrid &grid, const TilePos &cell,
-                                   const unsigned int radius, const float fuse_seconds) const {
+    DangerMap DangerMap::with_bomb(const TileGrid& grid, const TilePos& cell, const unsigned int radius,
+                                   const float fuse_seconds) const {
         DangerMap copy = *this;
         copy.add_bomb(grid, cell, radius, fuse_seconds);
         return copy;
     }
 
-    void DangerMap::add_bomb(const TileGrid &grid, const TilePos &cell,
-                             const unsigned int radius, const float fuse_seconds) {
+    void DangerMap::add_bomb(const TileGrid& grid, const TilePos& cell, const unsigned int radius,
+                             const float fuse_seconds) {
         mark(cell, fuse_seconds);
 
         // The same rules as World::spread_blast, deliberately: a bot that
@@ -59,10 +58,8 @@ namespace bomberman::logic::ai {
             const Direction dir = by_index(i);
 
             for (unsigned int step = 1; step <= radius; ++step) {
-                const TilePos target{
-                    cell.row + static_cast<int>(to_vector(dir).y) * static_cast<int>(step),
-                    cell.col + static_cast<int>(to_vector(dir).x) * static_cast<int>(step)
-                };
+                const TilePos target{cell.row + static_cast<int>(to_vector(dir).y) * static_cast<int>(step),
+                                     cell.col + static_cast<int>(to_vector(dir).x) * static_cast<int>(step)};
 
                 const Tile tile = grid.get_tile(target);
                 if (tile == Tile::Indestructible) {
@@ -78,7 +75,7 @@ namespace bomberman::logic::ai {
         }
     }
 
-    void DangerMap::mark(const TilePos &cell, const float seconds) {
+    void DangerMap::mark(const TilePos& cell, const float seconds) {
         if (!contains(cell)) {
             return;
         }
@@ -86,27 +83,27 @@ namespace bomberman::logic::ai {
         current = std::min(current, seconds);
     }
 
-    float DangerMap::seconds_until_blast(const TilePos &cell) const {
+    float DangerMap::seconds_until_blast(const TilePos& cell) const {
         if (!contains(cell)) {
             return never;
         }
         return seconds_[index(cell)];
     }
 
-    bool DangerMap::safe(const TilePos &cell) const {
+    bool DangerMap::safe(const TilePos& cell) const {
         return seconds_until_blast(cell) == never;
     }
 
-    bool DangerMap::safe_for(const TilePos &cell, const float seconds) const {
+    bool DangerMap::safe_for(const TilePos& cell, const float seconds) const {
         return seconds_until_blast(cell) > seconds;
     }
 
-    std::size_t DangerMap::index(const TilePos &cell) const {
-        return static_cast<std::size_t>(cell.row) * static_cast<std::size_t>(columns_)
-             + static_cast<std::size_t>(cell.col);
+    std::size_t DangerMap::index(const TilePos& cell) const {
+        return static_cast<std::size_t>(cell.row) * static_cast<std::size_t>(columns_) +
+               static_cast<std::size_t>(cell.col);
     }
 
-    bool DangerMap::contains(const TilePos &cell) const {
+    bool DangerMap::contains(const TilePos& cell) const {
         return cell.row >= 0 && cell.col >= 0 && cell.row < rows_ && cell.col < columns_;
     }
-}
+} // namespace bomberman::logic::ai

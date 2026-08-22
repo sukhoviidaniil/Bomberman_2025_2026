@@ -6,7 +6,7 @@
  * Disclaimer:
  *   This file is part of Bomberman.
  *   Unauthorized use, reproduction, or distribution is prohibited.
-***************************************************************/
+ ***************************************************************/
 #ifndef BOMBERMAN_LOGIC_CONFIG_H
 #define BOMBERMAN_LOGIC_CONFIG_H
 
@@ -57,8 +57,8 @@ namespace bomberman::logic {
 
     /// @brief Everything about one round that is not the map.
     struct RoundConfig {
-        float character_speed = 0.45f;  ///< World units per second
-        float character_size = 0.85f;   ///< Fraction of a tile
+        float character_speed = 0.45f; ///< World units per second
+        float character_size = 0.85f;  ///< Fraction of a tile
         float bomb_fuse_seconds = 2.f;
         float explosion_seconds = 0.5f;
         std::size_t bot_count = 3;
@@ -135,6 +135,6 @@ namespace bomberman::logic {
          */
         void validate() const;
     };
-}
+} // namespace bomberman::logic
 
-#endif //BOMBERMAN_LOGIC_CONFIG_H
+#endif // BOMBERMAN_LOGIC_CONFIG_H
