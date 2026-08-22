@@ -314,4 +314,8 @@ is the very same priority chain of behaviours, just in a different order for eac
 
 **Sound.** `view::AudioDirector` reacts to gameplay events (explosion, power-up pickup,
 death, win/loss) through the very same Observer bus that `logic::Score` uses - no direct
-calls from the game logic into the audio code anywhere.
+calls from the game logic into the audio code anywhere. Six distinct triggers are wired
+up this way (bomb placed, explosion, pick-up, death, victory, defeat), and volume is
+scaled by whether the event came from the player or a bot - a bomb a bot places on the
+far side of the arena plays quieter than one the player places, so the mix does not get
+drowned out by things happening off to the side.
