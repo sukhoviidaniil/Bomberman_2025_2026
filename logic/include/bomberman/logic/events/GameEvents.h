@@ -20,15 +20,15 @@
 
 namespace bomberman::logic {
 
-    /// @brief Which power-up a pick-up grants.
-    enum class PowerUpKind {
-        Fire,      ///< +1 blast radius in each direction
-        ExtraBomb, ///< +1 simultaneously placeable bomb
-        Skates     ///< +movement speed
-    };
+/// @brief Which power-up a pick-up grants.
+enum class PowerUpKind {
+    Fire,      ///< +1 blast radius in each direction
+    ExtraBomb, ///< +1 simultaneously placeable bomb
+    Skates     ///< +movement speed
+};
 
-    /// @brief Distinguishes the human player from the three bots.
-    enum class CharacterKind { Player, Bot };
+/// @brief Distinguishes the human player from the three bots.
+enum class CharacterKind { Player, Bot };
 } // namespace bomberman::logic
 
 /**
@@ -61,78 +61,78 @@ namespace bomberman::logic {
  */
 namespace bomberman::logic::entity_events {
 
-    /// @brief The entity is now somewhere else.
-    struct Moved {
-        static constexpr sif::event::EventMask mask = sif::event::EventMask::Program;
-        sif::math::Point2 position{};
-        Direction direction = Direction::None;
-    };
+/// @brief The entity is now somewhere else.
+struct Moved {
+    static constexpr sif::event::EventMask mask = sif::event::EventMask::Program;
+    sif::math::Point2 position{};
+    Direction direction = Direction::None;
+};
 
-    /// @brief The entity started/stopped moving; views switch animations.
-    struct MotionChanged {
-        static constexpr sif::event::EventMask mask = sif::event::EventMask::Program;
-        bool moving = false;
-        Direction direction = Direction::None;
-    };
+/// @brief The entity started/stopped moving; views switch animations.
+struct MotionChanged {
+    static constexpr sif::event::EventMask mask = sif::event::EventMask::Program;
+    bool moving = false;
+    Direction direction = Direction::None;
+};
 
-    /// @brief The entity died; the view plays its death animation.
-    struct Died {
-        static constexpr sif::event::EventMask mask = sif::event::EventMask::Program;
-    };
+/// @brief The entity died; the view plays its death animation.
+struct Died {
+    static constexpr sif::event::EventMask mask = sif::event::EventMask::Program;
+};
 
-    /// @brief A bomb entered the last second of its fuse.
-    struct FuseCritical {
-        static constexpr sif::event::EventMask mask = sif::event::EventMask::Program;
-    };
+/// @brief A bomb entered the last second of its fuse.
+struct FuseCritical {
+    static constexpr sif::event::EventMask mask = sif::event::EventMask::Program;
+};
 } // namespace bomberman::logic::entity_events
 
 namespace bomberman::logic::game_events {
 
-    /// @brief One frame of gameplay elapsed. Score uses it for the survival bonus.
-    struct Tick {
-        static constexpr sif::event::EventMask mask = sif::event::EventMask::Program;
-        float dt = 0.f;
-    };
+/// @brief One frame of gameplay elapsed. Score uses it for the survival bonus.
+struct Tick {
+    static constexpr sif::event::EventMask mask = sif::event::EventMask::Program;
+    float dt = 0.f;
+};
 
-    /// @brief A character just placed a bomb.
-    struct BombPlaced {
-        static constexpr sif::event::EventMask mask = sif::event::EventMask::Program;
-        TilePos cell{};
-        bool by_player = false;
-    };
+/// @brief A character just placed a bomb.
+struct BombPlaced {
+    static constexpr sif::event::EventMask mask = sif::event::EventMask::Program;
+    TilePos cell{};
+    bool by_player = false;
+};
 
-    /// @brief A bomb went off (once per bomb, not once per burning tile).
-    struct BombExploded {
-        static constexpr sif::event::EventMask mask = sif::event::EventMask::Program;
-        TilePos cell{};
-    };
+/// @brief A bomb went off (once per bomb, not once per burning tile).
+struct BombExploded {
+    static constexpr sif::event::EventMask mask = sif::event::EventMask::Program;
+    TilePos cell{};
+};
 
-    /// @brief A destructible block was blown up.
-    struct BlockDestroyed {
-        static constexpr sif::event::EventMask mask = sif::event::EventMask::Program;
-        TilePos cell{};
-        bool by_player = false; ///< Only the player's own blasts score.
-    };
+/// @brief A destructible block was blown up.
+struct BlockDestroyed {
+    static constexpr sif::event::EventMask mask = sif::event::EventMask::Program;
+    TilePos cell{};
+    bool by_player = false; ///< Only the player's own blasts score.
+};
 
-    /// @brief A power-up was picked up.
-    struct PowerUpTaken {
-        static constexpr sif::event::EventMask mask = sif::event::EventMask::Program;
-        PowerUpKind kind = PowerUpKind::Fire;
-        bool by_player = false;
-    };
+/// @brief A power-up was picked up.
+struct PowerUpTaken {
+    static constexpr sif::event::EventMask mask = sif::event::EventMask::Program;
+    PowerUpKind kind = PowerUpKind::Fire;
+    bool by_player = false;
+};
 
-    /// @brief A character was caught by a blast.
-    struct CharacterKilled {
-        static constexpr sif::event::EventMask mask = sif::event::EventMask::Program;
-        CharacterKind victim = CharacterKind::Bot;
-        bool by_player = false; ///< True when the player's bomb did it.
-    };
+/// @brief A character was caught by a blast.
+struct CharacterKilled {
+    static constexpr sif::event::EventMask mask = sif::event::EventMask::Program;
+    CharacterKind victim = CharacterKind::Bot;
+    bool by_player = false; ///< True when the player's bomb did it.
+};
 
-    /// @brief The round ended.
-    struct RoundEnded {
-        static constexpr sif::event::EventMask mask = sif::event::EventMask::Program;
-        bool player_won = false;
-    };
+/// @brief The round ended.
+struct RoundEnded {
+    static constexpr sif::event::EventMask mask = sif::event::EventMask::Program;
+    bool player_won = false;
+};
 } // namespace bomberman::logic::game_events
 
 #endif // BOMBERMAN_LOGIC_GAMEEVENTS_H

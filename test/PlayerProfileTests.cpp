@@ -19,19 +19,17 @@
 using namespace bomberman::logic;
 
 namespace {
-    std::string temp_path(const std::string& name) {
-        return (std::filesystem::temp_directory_path() / name).string();
-    }
+std::string temp_path(const std::string& name) { return (std::filesystem::temp_directory_path() / name).string(); }
 
-    template<class Fn>
-    bool throws(Fn&& fn) {
-        try {
-            fn();
-        } catch (const std::exception&) {
-            return true;
-        }
-        return false;
+template <class Fn>
+bool throws(Fn&& fn) {
+    try {
+        fn();
+    } catch (const std::exception&) {
+        return true;
     }
+    return false;
+}
 } // namespace
 
 // ---------------------------------------------------------------------

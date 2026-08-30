@@ -23,44 +23,44 @@
 using namespace bomberman::logic;
 
 namespace {
-    /// Writes a config file into the temp directory and returns its path.
-    std::string temp_config(const std::string& name, const std::string& contents) {
-        const std::filesystem::path path = std::filesystem::temp_directory_path() / name;
-        std::ofstream(path) << contents;
-        return path.string();
-    }
+/// Writes a config file into the temp directory and returns its path.
+std::string temp_config(const std::string& name, const std::string& contents) {
+    const std::filesystem::path path = std::filesystem::temp_directory_path() / name;
+    std::ofstream(path) << contents;
+    return path.string();
+}
 
-    template<class Fn>
-    bool throws(Fn&& fn) {
-        try {
-            fn();
-        } catch (const std::exception&) {
-            return true;
-        }
-        return false;
+template <class Fn>
+bool throws(Fn&& fn) {
+    try {
+        fn();
+    } catch (const std::exception&) {
+        return true;
     }
+    return false;
+}
 
-    /// Renders a grid as characters, so two arenas can be compared exactly.
-    std::string fingerprint(const TileGrid& grid) {
-        std::string out;
-        for (int row = 0; row < static_cast<int>(grid.rows()); ++row) {
-            for (int col = 0; col < static_cast<int>(grid.columns()); ++col) {
-                switch (grid.get_tile({row, col})) {
-                case Tile::Indestructible:
-                    out += '#';
-                    break;
-                case Tile::Destructible:
-                    out += '+';
-                    break;
-                default:
-                    out += '.';
-                    break;
-                }
+/// Renders a grid as characters, so two arenas can be compared exactly.
+std::string fingerprint(const TileGrid& grid) {
+    std::string out;
+    for (int row = 0; row < static_cast<int>(grid.rows()); ++row) {
+        for (int col = 0; col < static_cast<int>(grid.columns()); ++col) {
+            switch (grid.get_tile({row, col})) {
+            case Tile::Indestructible:
+                out += '#';
+                break;
+            case Tile::Destructible:
+                out += '+';
+                break;
+            default:
+                out += '.';
+                break;
             }
-            out += '\n';
         }
-        return out;
+        out += '\n';
     }
+    return out;
+}
 } // namespace
 
 // ---------------------------------------------------------------------

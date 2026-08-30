@@ -22,16 +22,14 @@
 using namespace bomberman::logic;
 
 namespace {
-    bool near_eq(const float a, const float b, const float eps = 0.0001f) {
-        return std::abs(a - b) < eps;
-    }
+bool near_eq(const float a, const float b, const float eps = 0.0001f) { return std::abs(a - b) < eps; }
 
-    /// A world wired to the head-less factory: no window, no views.
-    struct Fixture {
-        std::shared_ptr<sif::event::Event_Bus> bus = std::make_shared<sif::event::Event_Bus>();
-        std::shared_ptr<IEntityFactory> factory = std::make_shared<HeadlessEntityFactory>();
-        World world{bus, factory};
-    };
+/// A world wired to the head-less factory: no window, no views.
+struct Fixture {
+    std::shared_ptr<sif::event::Event_Bus> bus = std::make_shared<sif::event::Event_Bus>();
+    std::shared_ptr<IEntityFactory> factory = std::make_shared<HeadlessEntityFactory>();
+    World world{bus, factory};
+};
 } // namespace
 
 // ---------------------------------------------------------------------

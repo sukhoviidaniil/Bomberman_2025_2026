@@ -24,60 +24,59 @@ using namespace bomberman::logic;
 using namespace bomberman::logic::ai;
 
 namespace {
-    /// An open arena of the given size, every cell free.
-    TileGrid open_grid(const std::size_t rows, const std::size_t columns) {
-        TileGrid grid(rows, columns);
-        for (int row = 0; row < static_cast<int>(rows); ++row) {
-            for (int col = 0; col < static_cast<int>(columns); ++col) {
-                grid.set_tile({row, col}, Tile::Free);
-            }
+/// An open arena of the given size, every cell free.
+TileGrid open_grid(const std::size_t rows, const std::size_t columns) {
+    TileGrid grid(rows, columns);
+    for (int row = 0; row < static_cast<int>(rows); ++row) {
+        for (int col = 0; col < static_cast<int>(columns); ++col) {
+            grid.set_tile({row, col}, Tile::Free);
         }
-        return grid;
+    }
+    return grid;
+}
+
+std::shared_ptr<Bomb> make_bomb(const TileGrid& grid, const TilePos cell, const unsigned int radius, const float fuse) {
+    return std::make_shared<Bomb>(grid.get_center(cell), grid.tile_size(), cell, std::weak_ptr<Character>{}, radius,
+                                  fuse);
+}
+
+/// A context over a grid, one bot and an explicit danger map.
+struct Fixture {
+    TileGrid grid;
+    DangerMap danger;
+    std::shared_ptr<Character> self;
+    std::vector<std::shared_ptr<Character>> characters;
+    std::vector<std::shared_ptr<PowerUp>> power_ups;
+    std::vector<std::shared_ptr<Bomb>> bombs;
+    std::vector<std::shared_ptr<Explosion>> explosions;
+
+    Fixture(TileGrid g, const TilePos start) : grid(std::move(g)) {
+        self = std::make_shared<Character>("Bot", grid.get_center(start), grid.tile_size() * 0.85f, 0.45f,
+                                           CharacterKind::Bot);
+        characters.push_back(self);
     }
 
-    std::shared_ptr<Bomb> make_bomb(const TileGrid& grid, const TilePos cell, const unsigned int radius,
-                                    const float fuse) {
-        return std::make_shared<Bomb>(grid.get_center(cell), grid.tile_size(), cell, std::weak_ptr<Character>{}, radius,
-                                      fuse);
+    void rebuild() { danger.rebuild(grid, bombs, explosions); }
+
+    [[nodiscard]] BotContext context() const {
+        const auto cell = grid.get_TilePos(self->position());
+        return BotContext{grid,
+                          danger,
+                          *self,
+                          cell.value_or(TilePos{0, 0}),
+                          characters,
+                          power_ups,
+                          [this](const TilePos& c) {
+                              for (const auto& b : bombs) {
+                                  if (b->cell() == c)
+                                      return true;
+                              }
+                              return false;
+                          },
+                          2.f,
+                          grid.tile_size() > 0.f ? self->speed() / grid.tile_size() : 1.f};
     }
-
-    /// A context over a grid, one bot and an explicit danger map.
-    struct Fixture {
-        TileGrid grid;
-        DangerMap danger;
-        std::shared_ptr<Character> self;
-        std::vector<std::shared_ptr<Character>> characters;
-        std::vector<std::shared_ptr<PowerUp>> power_ups;
-        std::vector<std::shared_ptr<Bomb>> bombs;
-        std::vector<std::shared_ptr<Explosion>> explosions;
-
-        Fixture(TileGrid g, const TilePos start) : grid(std::move(g)) {
-            self = std::make_shared<Character>("Bot", grid.get_center(start), grid.tile_size() * 0.85f, 0.45f,
-                                               CharacterKind::Bot);
-            characters.push_back(self);
-        }
-
-        void rebuild() { danger.rebuild(grid, bombs, explosions); }
-
-        [[nodiscard]] BotContext context() const {
-            const auto cell = grid.get_TilePos(self->position());
-            return BotContext{grid,
-                              danger,
-                              *self,
-                              cell.value_or(TilePos{0, 0}),
-                              characters,
-                              power_ups,
-                              [this](const TilePos& c) {
-                                  for (const auto& b : bombs) {
-                                      if (b->cell() == c)
-                                          return true;
-                                  }
-                                  return false;
-                              },
-                              2.f,
-                              grid.tile_size() > 0.f ? self->speed() / grid.tile_size() : 1.f};
-        }
-    };
+};
 } // namespace
 
 // ---------------------------------------------------------------------

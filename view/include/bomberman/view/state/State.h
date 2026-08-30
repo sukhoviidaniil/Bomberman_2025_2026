@@ -18,85 +18,85 @@
 
 namespace bomberman::view {
 
-    class StateManager;
+class StateManager;
+
+/**
+ * @brief Everything a state needs in order to draw.
+ *
+ * Passed in rather than reached for: a state has no pointer to the
+ * Game, so it cannot accidentally grow a dependency on the window,
+ * the audio device or the asset registry just because it wanted a
+ * font. Adding a shared drawing resource later means adding a field
+ * here, and the compiler lists every state that has to care.
+ */
+struct DrawContext {
+    const sif::rnd::Camera& camera;
+    sif::asset::AssetHandle<sif::asset::Font> font;
+};
+
+/**
+ * @brief One screen of the game: menu, level, pause, game over.
+ *
+ * A state decides for itself when to hand over ("It should be the
+ * responsibilities of the individual states to decide when to switch
+ * to what new state, not the StateManager, which should theoretically
+ * not be aware which concrete state is currently running"), so the
+ * manager below only ever sees State*.
+ *
+ * Note that the retake's list of required patterns no longer includes
+ * State. It is kept because the game genuinely has four screens and a
+ * pause that must resume where it left off - a stack models that in a
+ * few dozen lines - but it is now a design choice to defend, not a box
+ * to tick.
+ */
+class State {
+public:
+    virtual ~State() = default;
+
+    State(const State&) = delete;
+    State& operator=(const State&) = delete;
+
+    /// @brief Called once when the state becomes the top of the stack.
+    virtual void on_enter(StateManager& manager);
+
+    /// @brief Called when another state is pushed on top of this one.
+    virtual void on_pause();
+
+    /// @brief Called when the state on top of this one is popped.
+    virtual void on_resume();
 
     /**
-     * @brief Everything a state needs in order to draw.
+     * @brief Advances the state by one frame.
      *
-     * Passed in rather than reached for: a state has no pointer to the
-     * Game, so it cannot accidentally grow a dependency on the window,
-     * the audio device or the asset registry just because it wanted a
-     * font. Adding a shared drawing resource later means adding a field
-     * here, and the compiler lists every state that has to care.
+     * Only the top state is updated: a paused level must genuinely
+     * stop, not keep simulating behind the pause screen.
      */
-    struct DrawContext {
-        const sif::rnd::Camera& camera;
-        sif::asset::AssetHandle<sif::asset::Font> font;
-    };
+    virtual void update(StateManager& manager, float dt) = 0;
+
+    virtual void on_key(StateManager& manager, sif::event::input::Key key) = 0;
 
     /**
-     * @brief One screen of the game: menu, level, pause, game over.
+     * @brief A character the user typed.
      *
-     * A state decides for itself when to hand over ("It should be the
-     * responsibilities of the individual states to decide when to switch
-     * to what new state, not the StateManager, which should theoretically
-     * not be aware which concrete state is currently running"), so the
-     * manager below only ever sees State*.
-     *
-     * Note that the retake's list of required patterns no longer includes
-     * State. It is kept because the game genuinely has four screens and a
-     * pause that must resume where it left off - a stack models that in a
-     * few dozen lines - but it is now a design choice to defend, not a box
-     * to tick.
+     * Separate from on_key because a key is a position on the keyboard
+     * and a character is what the layout produced from it; only the
+     * screens that accept text care, so the default does nothing.
      */
-    class State {
-    public:
-        virtual ~State() = default;
+    virtual void on_text(StateManager& manager, char32_t character);
 
-        State(const State&) = delete;
-        State& operator=(const State&) = delete;
+    virtual void append_render_items(sif::rnd::RenderFrame& frame, const DrawContext& ctx) const = 0;
 
-        /// @brief Called once when the state becomes the top of the stack.
-        virtual void on_enter(StateManager& manager);
+    /**
+     * @brief True if the state below should also be drawn.
+     *
+     * The pause screen is an overlay: the level stays visible behind
+     * it, which is only possible because the stack kept it.
+     */
+    [[nodiscard]] virtual bool draws_below() const;
 
-        /// @brief Called when another state is pushed on top of this one.
-        virtual void on_pause();
-
-        /// @brief Called when the state on top of this one is popped.
-        virtual void on_resume();
-
-        /**
-         * @brief Advances the state by one frame.
-         *
-         * Only the top state is updated: a paused level must genuinely
-         * stop, not keep simulating behind the pause screen.
-         */
-        virtual void update(StateManager& manager, float dt) = 0;
-
-        virtual void on_key(StateManager& manager, sif::event::input::Key key) = 0;
-
-        /**
-         * @brief A character the user typed.
-         *
-         * Separate from on_key because a key is a position on the keyboard
-         * and a character is what the layout produced from it; only the
-         * screens that accept text care, so the default does nothing.
-         */
-        virtual void on_text(StateManager& manager, char32_t character);
-
-        virtual void append_render_items(sif::rnd::RenderFrame& frame, const DrawContext& ctx) const = 0;
-
-        /**
-         * @brief True if the state below should also be drawn.
-         *
-         * The pause screen is an overlay: the level stays visible behind
-         * it, which is only possible because the stack kept it.
-         */
-        [[nodiscard]] virtual bool draws_below() const;
-
-    protected:
-        State() = default;
-    };
+protected:
+    State() = default;
+};
 } // namespace bomberman::view
 
 #endif // BOMBERMAN_VIEW_STATE_H

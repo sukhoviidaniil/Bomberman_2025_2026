@@ -22,36 +22,36 @@
 using namespace bomberman::logic;
 
 namespace {
-    /// A round on a tiny arena with a guaranteed drop, so the pick-up
-    /// lifecycle can be watched end to end.
-    struct Round {
-        std::shared_ptr<sif::event::Event_Bus> bus = std::make_shared<sif::event::Event_Bus>();
-        std::shared_ptr<IEntityFactory> factory = std::make_shared<HeadlessEntityFactory>();
-        std::unique_ptr<World> world;
+/// A round on a tiny arena with a guaranteed drop, so the pick-up
+/// lifecycle can be watched end to end.
+struct Round {
+    std::shared_ptr<sif::event::Event_Bus> bus = std::make_shared<sif::event::Event_Bus>();
+    std::shared_ptr<IEntityFactory> factory = std::make_shared<HeadlessEntityFactory>();
+    std::unique_ptr<World> world;
 
-        Round(std::vector<std::string> layout, PowerUpRules rules) {
-            MapConfig map;
-            map.layout = std::move(layout);
-            world = std::make_unique<World>(bus, factory, map, RoundConfig{}, rules);
-            world->start_round();
-        }
-
-        void run(const float seconds) {
-            const int frames = static_cast<int>(seconds * 60.f);
-            for (int i = 0; i < frames; ++i) {
-                world->update(1.f / 60.f);
-            }
-        }
-    };
-
-    PowerUpRules always_drop(const PowerUpKind only) {
-        PowerUpRules rules;
-        rules.drop_chance = 1.f;
-        rules.fire_weight = only == PowerUpKind::Fire ? 1.f : 0.f;
-        rules.extra_bomb_weight = only == PowerUpKind::ExtraBomb ? 1.f : 0.f;
-        rules.skates_weight = only == PowerUpKind::Skates ? 1.f : 0.f;
-        return rules;
+    Round(std::vector<std::string> layout, PowerUpRules rules) {
+        MapConfig map;
+        map.layout = std::move(layout);
+        world = std::make_unique<World>(bus, factory, map, RoundConfig{}, rules);
+        world->start_round();
     }
+
+    void run(const float seconds) {
+        const int frames = static_cast<int>(seconds * 60.f);
+        for (int i = 0; i < frames; ++i) {
+            world->update(1.f / 60.f);
+        }
+    }
+};
+
+PowerUpRules always_drop(const PowerUpKind only) {
+    PowerUpRules rules;
+    rules.drop_chance = 1.f;
+    rules.fire_weight = only == PowerUpKind::Fire ? 1.f : 0.f;
+    rules.extra_bomb_weight = only == PowerUpKind::ExtraBomb ? 1.f : 0.f;
+    rules.skates_weight = only == PowerUpKind::Skates ? 1.f : 0.f;
+    return rules;
+}
 } // namespace
 
 // ---------------------------------------------------------------------

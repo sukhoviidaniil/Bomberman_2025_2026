@@ -17,238 +17,229 @@
 #include "sif/internal/Random.h"
 
 namespace bomberman::logic {
-    namespace {
-        /// The world spans [-1, 1] on both axes, i.e. two units per axis.
-        constexpr float world_extent = 2.f;
-    } // namespace
+namespace {
+/// The world spans [-1, 1] on both axes, i.e. two units per axis.
+constexpr float world_extent = 2.f;
+} // namespace
 
-    TileGrid::TileGrid(const std::size_t rows, const std::size_t columns)
-        : rows_(rows), columns_(columns), tiles_(rows * columns, Tile::Free) {
-        if (rows == 0 || columns == 0) {
-            throw std::invalid_argument("TileGrid: an arena needs at least one row and one column");
-        }
-        recompute_projection();
-        spawns_ = default_spawn_cells();
+TileGrid::TileGrid(const std::size_t rows, const std::size_t columns)
+    : rows_(rows), columns_(columns), tiles_(rows * columns, Tile::Free) {
+    if (rows == 0 || columns == 0) {
+        throw std::invalid_argument("TileGrid: an arena needs at least one row and one column");
+    }
+    recompute_projection();
+    spawns_ = default_spawn_cells();
+}
+
+void TileGrid::recompute_projection() {
+    // Square tiles: the longer axis decides the size, the shorter one
+    // is centred inside [-1, 1].
+    const auto longest = static_cast<float>(std::max(rows_, columns_));
+    tile_size_ = world_extent / longest;
+
+    origin_ = {-static_cast<float>(columns_) * tile_size_ * 0.5f, -static_cast<float>(rows_) * tile_size_ * 0.5f};
+}
+
+std::size_t TileGrid::rows() const { return rows_; }
+std::size_t TileGrid::columns() const { return columns_; }
+float TileGrid::tile_size() const { return tile_size_; }
+
+sif::intrnl::Rect TileGrid::bounds() const {
+    return {origin_.x, origin_.y, static_cast<float>(columns_) * tile_size_, static_cast<float>(rows_) * tile_size_};
+}
+
+bool TileGrid::contains(const TilePos& pos) const {
+    return pos.row >= 0 && pos.col >= 0 && static_cast<std::size_t>(pos.row) < rows_ &&
+           static_cast<std::size_t>(pos.col) < columns_;
+}
+
+Tile TileGrid::get_tile(const TilePos& pos) const {
+    if (!contains(pos)) {
+        // The arena is implicitly walled in. Reporting Free here (or
+        // clamping, as the Pac-Man grid did) would let a blast or a
+        // character escape through a corner.
+        return Tile::Indestructible;
+    }
+    return tiles_[static_cast<std::size_t>(pos.row) * columns_ + static_cast<std::size_t>(pos.col)];
+}
+
+void TileGrid::set_tile(const TilePos& pos, const Tile tile) {
+    if (!contains(pos)) {
+        throw std::out_of_range("TileGrid::set_tile - cell outside the arena");
+    }
+    tiles_[static_cast<std::size_t>(pos.row) * columns_ + static_cast<std::size_t>(pos.col)] = tile;
+}
+
+TilePos TileGrid::clamp(TilePos pos) const {
+    pos.row = std::clamp(pos.row, 0, static_cast<int>(rows_) - 1);
+    pos.col = std::clamp(pos.col, 0, static_cast<int>(columns_) - 1);
+    return pos;
+}
+
+std::optional<TilePos> TileGrid::get_TilePos(const sif::math::Point2& pos) const {
+    if (tile_size_ <= 0.f) {
+        return std::nullopt;
     }
 
-    void TileGrid::recompute_projection() {
-        // Square tiles: the longer axis decides the size, the shorter one
-        // is centred inside [-1, 1].
-        const auto longest = static_cast<float>(std::max(rows_, columns_));
-        tile_size_ = world_extent / longest;
+    const TilePos cell{static_cast<int>(std::floor((pos.y - origin_.y) / tile_size_)),
+                       static_cast<int>(std::floor((pos.x - origin_.x) / tile_size_))};
 
-        origin_ = {-static_cast<float>(columns_) * tile_size_ * 0.5f, -static_cast<float>(rows_) * tile_size_ * 0.5f};
+    if (!contains(cell)) {
+        return std::nullopt;
     }
+    return cell;
+}
 
-    std::size_t TileGrid::rows() const {
-        return rows_;
-    }
-    std::size_t TileGrid::columns() const {
-        return columns_;
-    }
-    float TileGrid::tile_size() const {
-        return tile_size_;
-    }
-
-    sif::intrnl::Rect TileGrid::bounds() const {
-        return {origin_.x, origin_.y, static_cast<float>(columns_) * tile_size_,
-                static_cast<float>(rows_) * tile_size_};
-    }
-
-    bool TileGrid::contains(const TilePos& pos) const {
-        return pos.row >= 0 && pos.col >= 0 && static_cast<std::size_t>(pos.row) < rows_ &&
-               static_cast<std::size_t>(pos.col) < columns_;
-    }
-
-    Tile TileGrid::get_tile(const TilePos& pos) const {
-        if (!contains(pos)) {
-            // The arena is implicitly walled in. Reporting Free here (or
-            // clamping, as the Pac-Man grid did) would let a blast or a
-            // character escape through a corner.
-            return Tile::Indestructible;
-        }
-        return tiles_[static_cast<std::size_t>(pos.row) * columns_ + static_cast<std::size_t>(pos.col)];
-    }
-
-    void TileGrid::set_tile(const TilePos& pos, const Tile tile) {
-        if (!contains(pos)) {
-            throw std::out_of_range("TileGrid::set_tile - cell outside the arena");
-        }
-        tiles_[static_cast<std::size_t>(pos.row) * columns_ + static_cast<std::size_t>(pos.col)] = tile;
-    }
-
-    TilePos TileGrid::clamp(TilePos pos) const {
-        pos.row = std::clamp(pos.row, 0, static_cast<int>(rows_) - 1);
-        pos.col = std::clamp(pos.col, 0, static_cast<int>(columns_) - 1);
+TilePos TileGrid::neighbour(const TilePos& pos, const Direction dir) const {
+    switch (dir) {
+    case Direction::Up:
+        return {pos.row - 1, pos.col};
+    case Direction::Down:
+        return {pos.row + 1, pos.col};
+    case Direction::Left:
+        return {pos.row, pos.col - 1};
+    case Direction::Right:
+        return {pos.row, pos.col + 1};
+    default:
         return pos;
     }
+}
 
-    std::optional<TilePos> TileGrid::get_TilePos(const sif::math::Point2& pos) const {
-        if (tile_size_ <= 0.f) {
-            return std::nullopt;
+sif::math::Point2 TileGrid::get_center(const TilePos& pos) const {
+    return {origin_.x + (static_cast<float>(pos.col) + 0.5f) * tile_size_,
+            origin_.y + (static_cast<float>(pos.row) + 0.5f) * tile_size_};
+}
+
+sif::intrnl::Rect TileGrid::get_rect(const TilePos& pos) const {
+    return {origin_.x + static_cast<float>(pos.col) * tile_size_, origin_.y + static_cast<float>(pos.row) * tile_size_,
+            tile_size_, tile_size_};
+}
+
+bool TileGrid::is_junction(const TilePos& pos, const Direction current) const {
+    for (std::size_t i = 0; i < direction_count; ++i) {
+        const Direction dir = by_index(i);
+        if (dir == current || dir == opposite(current)) {
+            continue;
         }
-
-        const TilePos cell{static_cast<int>(std::floor((pos.y - origin_.y) / tile_size_)),
-                           static_cast<int>(std::floor((pos.x - origin_.x) / tile_size_))};
-
-        if (!contains(cell)) {
-            return std::nullopt;
-        }
-        return cell;
-    }
-
-    TilePos TileGrid::neighbour(const TilePos& pos, const Direction dir) const {
-        switch (dir) {
-        case Direction::Up:
-            return {pos.row - 1, pos.col};
-        case Direction::Down:
-            return {pos.row + 1, pos.col};
-        case Direction::Left:
-            return {pos.row, pos.col - 1};
-        case Direction::Right:
-            return {pos.row, pos.col + 1};
-        default:
-            return pos;
+        if (walkable(get_tile(neighbour(pos, dir)))) {
+            return true;
         }
     }
+    return false;
+}
 
-    sif::math::Point2 TileGrid::get_center(const TilePos& pos) const {
-        return {origin_.x + (static_cast<float>(pos.col) + 0.5f) * tile_size_,
-                origin_.y + (static_cast<float>(pos.row) + 0.5f) * tile_size_};
+const std::vector<TilePos>& TileGrid::spawn_cells() const { return spawns_; }
+
+std::vector<TilePos> TileGrid::default_spawn_cells() const {
+    const int last_row = static_cast<int>(rows_) - 1;
+    const int last_col = static_cast<int>(columns_) - 1;
+    return {{0, 0}, {0, last_col}, {last_row, 0}, {last_row, last_col}};
+}
+
+TileGrid TileGrid::from_layout(const std::vector<std::string>& layout) {
+    if (layout.empty() || layout.front().empty()) {
+        throw std::invalid_argument("TileGrid::from_layout - the layout is empty");
     }
 
-    sif::intrnl::Rect TileGrid::get_rect(const TilePos& pos) const {
-        return {origin_.x + static_cast<float>(pos.col) * tile_size_,
-                origin_.y + static_cast<float>(pos.row) * tile_size_, tile_size_, tile_size_};
+    const std::size_t columns = layout.front().size();
+    for (std::size_t row = 0; row < layout.size(); ++row) {
+        if (layout[row].size() != columns) {
+            throw std::invalid_argument("TileGrid::from_layout - row " + std::to_string(row) +
+                                        " has a different width than the first row");
+        }
     }
 
-    bool TileGrid::is_junction(const TilePos& pos, const Direction current) const {
-        for (std::size_t i = 0; i < direction_count; ++i) {
-            const Direction dir = by_index(i);
-            if (dir == current || dir == opposite(current)) {
+    TileGrid grid(layout.size(), columns);
+
+    // Spawns are collected in digit order, not in reading order, so
+    // '1' is always the player wherever it appears in the file.
+    std::map<char, TilePos> spawns_by_digit;
+
+    for (std::size_t row = 0; row < layout.size(); ++row) {
+        for (std::size_t col = 0; col < columns; ++col) {
+            const TilePos cell{static_cast<int>(row), static_cast<int>(col)};
+            const char c = layout[row][col];
+
+            switch (c) {
+            case '#':
+                grid.set_tile(cell, Tile::Indestructible);
+                break;
+            case '+':
+            case '*':
+                grid.set_tile(cell, Tile::Destructible);
+                break;
+            case '.':
+            case ' ':
+                grid.set_tile(cell, Tile::Free);
+                break;
+            case '1':
+            case '2':
+            case '3':
+            case '4':
+                grid.set_tile(cell, Tile::Free);
+                spawns_by_digit.emplace(c, cell);
+                break;
+            default:
+                throw std::invalid_argument(std::string("TileGrid::from_layout - unknown character '") + c +
+                                            "' at row " + std::to_string(row) + ", column " + std::to_string(col) +
+                                            " (expected one of # + * . space 1 2 3 4)");
+            }
+        }
+    }
+
+    if (!spawns_by_digit.empty()) {
+        grid.spawns_.clear();
+        for (const auto& [digit, cell] : spawns_by_digit) {
+            grid.spawns_.push_back(cell);
+        }
+    }
+
+    return grid;
+}
+
+void TileGrid::generate_arena(const float destructible_chance, const std::uint32_t seed) {
+    // Restarting the shared stream is what makes the arena
+    // reproducible; see the note on the declaration.
+    sif::intrnl::Random::instance().seed(seed);
+    generate_arena(destructible_chance);
+}
+
+void TileGrid::generate_arena(const float destructible_chance) {
+    const float chance = std::clamp(destructible_chance, 0.f, 1.f);
+
+    // 1. The fixed lattice: a pillar wherever both coordinates are
+    //    odd, which is what gives Bomberman its recognisable shape.
+    for (int row = 0; row < static_cast<int>(rows_); ++row) {
+        for (int col = 0; col < static_cast<int>(columns_); ++col) {
+            const bool pillar = (row % 2 == 1) && (col % 2 == 1);
+            set_tile({row, col}, pillar ? Tile::Indestructible : Tile::Free);
+        }
+    }
+
+    // 2. Destructible fill, with a chance of leaving air instead.
+    for (int row = 0; row < static_cast<int>(rows_); ++row) {
+        for (int col = 0; col < static_cast<int>(columns_); ++col) {
+            const TilePos cell{row, col};
+            if (get_tile(cell) != Tile::Free) {
                 continue;
             }
-            if (walkable(get_tile(neighbour(pos, dir)))) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    const std::vector<TilePos>& TileGrid::spawn_cells() const {
-        return spawns_;
-    }
-
-    std::vector<TilePos> TileGrid::default_spawn_cells() const {
-        const int last_row = static_cast<int>(rows_) - 1;
-        const int last_col = static_cast<int>(columns_) - 1;
-        return {{0, 0}, {0, last_col}, {last_row, 0}, {last_row, last_col}};
-    }
-
-    TileGrid TileGrid::from_layout(const std::vector<std::string>& layout) {
-        if (layout.empty() || layout.front().empty()) {
-            throw std::invalid_argument("TileGrid::from_layout - the layout is empty");
-        }
-
-        const std::size_t columns = layout.front().size();
-        for (std::size_t row = 0; row < layout.size(); ++row) {
-            if (layout[row].size() != columns) {
-                throw std::invalid_argument("TileGrid::from_layout - row " + std::to_string(row) +
-                                            " has a different width than the first row");
-            }
-        }
-
-        TileGrid grid(layout.size(), columns);
-
-        // Spawns are collected in digit order, not in reading order, so
-        // '1' is always the player wherever it appears in the file.
-        std::map<char, TilePos> spawns_by_digit;
-
-        for (std::size_t row = 0; row < layout.size(); ++row) {
-            for (std::size_t col = 0; col < columns; ++col) {
-                const TilePos cell{static_cast<int>(row), static_cast<int>(col)};
-                const char c = layout[row][col];
-
-                switch (c) {
-                case '#':
-                    grid.set_tile(cell, Tile::Indestructible);
-                    break;
-                case '+':
-                case '*':
-                    grid.set_tile(cell, Tile::Destructible);
-                    break;
-                case '.':
-                case ' ':
-                    grid.set_tile(cell, Tile::Free);
-                    break;
-                case '1':
-                case '2':
-                case '3':
-                case '4':
-                    grid.set_tile(cell, Tile::Free);
-                    spawns_by_digit.emplace(c, cell);
-                    break;
-                default:
-                    throw std::invalid_argument(std::string("TileGrid::from_layout - unknown character '") + c +
-                                                "' at row " + std::to_string(row) + ", column " + std::to_string(col) +
-                                                " (expected one of # + * . space 1 2 3 4)");
-                }
-            }
-        }
-
-        if (!spawns_by_digit.empty()) {
-            grid.spawns_.clear();
-            for (const auto& [digit, cell] : spawns_by_digit) {
-                grid.spawns_.push_back(cell);
-            }
-        }
-
-        return grid;
-    }
-
-    void TileGrid::generate_arena(const float destructible_chance, const std::uint32_t seed) {
-        // Restarting the shared stream is what makes the arena
-        // reproducible; see the note on the declaration.
-        sif::intrnl::Random::instance().seed(seed);
-        generate_arena(destructible_chance);
-    }
-
-    void TileGrid::generate_arena(const float destructible_chance) {
-        const float chance = std::clamp(destructible_chance, 0.f, 1.f);
-
-        // 1. The fixed lattice: a pillar wherever both coordinates are
-        //    odd, which is what gives Bomberman its recognisable shape.
-        for (int row = 0; row < static_cast<int>(rows_); ++row) {
-            for (int col = 0; col < static_cast<int>(columns_); ++col) {
-                const bool pillar = (row % 2 == 1) && (col % 2 == 1);
-                set_tile({row, col}, pillar ? Tile::Indestructible : Tile::Free);
-            }
-        }
-
-        // 2. Destructible fill, with a chance of leaving air instead.
-        for (int row = 0; row < static_cast<int>(rows_); ++row) {
-            for (int col = 0; col < static_cast<int>(columns_); ++col) {
-                const TilePos cell{row, col};
-                if (get_tile(cell) != Tile::Free) {
-                    continue;
-                }
-                if (sif::intrnl::rand_chance(chance)) {
-                    set_tile(cell, Tile::Destructible);
-                }
-            }
-        }
-
-        // 3. Clear each spawn and its two orthogonal neighbours, so every
-        //    character can place a first bomb and still step out of the
-        //    blast. Without this the game can be lost before it starts.
-        for (const TilePos& spawn : spawns_) {
-            set_tile(spawn, Tile::Free);
-            for (std::size_t i = 0; i < direction_count; ++i) {
-                const TilePos next = neighbour(spawn, by_index(i));
-                if (contains(next) && get_tile(next) == Tile::Destructible) {
-                    set_tile(next, Tile::Free);
-                }
+            if (sif::intrnl::rand_chance(chance)) {
+                set_tile(cell, Tile::Destructible);
             }
         }
     }
+
+    // 3. Clear each spawn and its two orthogonal neighbours, so every
+    //    character can place a first bomb and still step out of the
+    //    blast. Without this the game can be lost before it starts.
+    for (const TilePos& spawn : spawns_) {
+        set_tile(spawn, Tile::Free);
+        for (std::size_t i = 0; i < direction_count; ++i) {
+            const TilePos next = neighbour(spawn, by_index(i));
+            if (contains(next) && get_tile(next) == Tile::Destructible) {
+                set_tile(next, Tile::Free);
+            }
+        }
+    }
+}
 } // namespace bomberman::logic

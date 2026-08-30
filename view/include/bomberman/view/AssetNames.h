@@ -26,39 +26,39 @@
  */
 namespace bomberman::view::assets {
 
-    inline const std::string ui_font = "UI";
+inline const std::string ui_font = "UI";
 
-    // Characters: one animation per direction, plus a death animation.
-    inline const std::string player_walk_up = "player_walk_up";
-    inline const std::string player_walk_down = "player_walk_down";
-    inline const std::string player_walk_left = "player_walk_left";
-    inline const std::string player_walk_right = "player_walk_right";
+// Characters: one animation per direction, plus a death animation.
+inline const std::string player_walk_up = "player_walk_up";
+inline const std::string player_walk_down = "player_walk_down";
+inline const std::string player_walk_left = "player_walk_left";
+inline const std::string player_walk_right = "player_walk_right";
 
-    inline const std::string player_idle_up = "player_idle_up";
-    inline const std::string player_idle_down = "player_idle_down";
-    inline const std::string player_idle_left = "player_idle_left";
-    inline const std::string player_idle_right = "player_idle_right";
+inline const std::string player_idle_up = "player_idle_up";
+inline const std::string player_idle_down = "player_idle_down";
+inline const std::string player_idle_left = "player_idle_left";
+inline const std::string player_idle_right = "player_idle_right";
 
-    inline const std::string player_die = "player_die";
+inline const std::string player_die = "player_die";
 
-    inline const std::string bomb = "bomb";
-    inline const std::string explosion = "explosion";
+inline const std::string bomb = "bomb";
+inline const std::string explosion = "explosion";
 
-    inline const std::string tile_floor = "tile_floor";
-    inline const std::string tile_wall = "tile_wall";
-    inline const std::string tile_block = "tile_block";
+inline const std::string tile_floor = "tile_floor";
+inline const std::string tile_wall = "tile_wall";
+inline const std::string tile_block = "tile_block";
 
-    inline const std::string item_fire = "item_fire";
-    inline const std::string item_bomb = "item_bomb";
-    inline const std::string item_skates = "item_skates";
+inline const std::string item_fire = "item_fire";
+inline const std::string item_bomb = "item_bomb";
+inline const std::string item_skates = "item_skates";
 
-    inline const std::string sfx_explosion = "sfx_explosion";
-    inline const std::string sfx_bomb_place = "sfx_bomb_place";
-    inline const std::string sfx_pickup = "sfx_pickup";
-    inline const std::string sfx_death = "sfx_death";
-    inline const std::string sfx_menu = "sfx_menu";
-    inline const std::string sfx_victory = "sfx_victory";
-    inline const std::string sfx_defeat = "sfx_defeat";
+inline const std::string sfx_explosion = "sfx_explosion";
+inline const std::string sfx_bomb_place = "sfx_bomb_place";
+inline const std::string sfx_pickup = "sfx_pickup";
+inline const std::string sfx_death = "sfx_death";
+inline const std::string sfx_menu = "sfx_menu";
+inline const std::string sfx_victory = "sfx_victory";
+inline const std::string sfx_defeat = "sfx_defeat";
 } // namespace bomberman::view::assets
 
 #endif // BOMBERMAN_VIEW_ASSETNAMES_H
